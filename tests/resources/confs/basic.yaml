@@ -1,0 +1,23 @@
+header:
+  version: 1
+  name: "zeus"
+configs:
+bblayers_conf:
+
+repos:
+  poky:
+    url: "git://git.yoctoproject.org/poky"
+    refspec: "zeus"
+    layers:
+      meta:
+      meta-poky:
+
+  meta-openembedded:
+    url: "git://git.openembedded.org/meta-openembedded"
+    refspec: "zeus"
+    layers:
+      meta-networking:
+      meta-python:
+      meta-filesystems:
+      meta-webserver:
+      meta-oe:
