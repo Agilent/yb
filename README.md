@@ -17,7 +17,7 @@ Historically, it has been painful to keep all of this in-sync, usually manifesti
 Goals and non-goals
 ====================
 
-yb strives to be a tool for helping developers with their everyday development tasks. Unlike kas, it does *not* enforce separation of build environment and host. yb is designed to complement the Yocto workflow you're already used to - for example, there is no `yb shell` command. 
+yb strives to be a tool for helping developers with their everyday development tasks. Unlike kas, it does *not* enforce separation of build environment and host. yb is designed to complement the Yocto workflow you're already used to - for example, there is no `yb shell` command. You'll run the `bitbake` command as usual.
 
 Specs and streams: keeping in-sync
 ==========================================
