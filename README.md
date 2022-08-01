@@ -159,4 +159,4 @@ Some portions have been adapted from [git2-rs](https://github.com/rust-lang/git2
 
 Disclaimer
 ========
-This is not an official Agilent or Synopsys product. No support is implied.
+This is not an official Agilent product. No support is implied.
