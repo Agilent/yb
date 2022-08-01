@@ -14,7 +14,7 @@ All of these tools are great for doing initial environment setup for CI and/or n
 
 Historically, it has been painful to keep all of this in-sync, usually manifesting as emails sent team-wide everytime bblayers.conf needs to change.
 
-Specs and streams - sharing configuration
+Specs and streams: keeping in-sync
 ==========================================
 
 Much like kas' configuration files (see https://kas.readthedocs.io/en/latest/userguide.html), yb has **specs** which are also .yaml files. In fact, the format is nearly the same (though interoperability is not guaranteed - if that's a feature you want please open an issue). 
