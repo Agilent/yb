@@ -147,7 +147,7 @@ This software requires a nightly Rust compiler.
 Why not Python?
 ===============
 
-Basically because [this](https://xkcd.com/1987/). Rust lets you build statically-linked binaries with no hassle. There is no beating that for distribution. Also, the type system and ecosystem is great.
+Basically because [this](https://xkcd.com/1987/). Rust lets you build statically-linked binaries with no hassle. There is no beating that for distribution. Also, the type system and ecosystem are great.
 
 License
 ========
