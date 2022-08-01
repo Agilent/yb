@@ -1,6 +1,6 @@
 # yb (*Y*octo *B*uddy)
 
-yb is designed to make it easy to setup and (perhaps more importantly) keep Yocto environments **up-to-date and in-sync** with your team. It is early in development, but we are releasing it now as it is already useful in certain workflows.
+yb is designed to make it easy to setup and (perhaps more importantly) keep Yocto environments **up-to-date and in-sync** with your team. It is early in development, but we are releasing it now as it is already useful.
 
 Motivation
 ===========
@@ -52,14 +52,75 @@ repos:
 
 Specs live in **streams**. A stream is just a git repo that you've hosted somewhere accessible by your developers.
 
-To setup yb, use `yb init` and give it the URL to the stream. This command creates a skeleton yocto/ directory with a hidden .yb directory. If you cd into that directory, you can then use the `yb activate` and `yb sync -a` commands. For example:
+# Quickstart
+
+yb supports two kinds of environments: bare Yocto and yb.
+
+## Bare Yocto
+
+A bare Yocto environment is one in which you aren't using any specs or streams. In this case, yb operates with reduced functionality but can still be extremely useful. See for example the `yb status` command below. To use:
+
+1. In a terminal, activate your Yocto environment. This is usually a matter of doing `source setupsdk` or `source oe-init-build-env`. 
+2. Run `yb init`
+3. Try running `yb status` 
+
+## yb environment
+
+A yb environment is created by providing a stream URL to `yb init`. If you do it within an activated Yocto environment, then the yb environment is constructed within the Yocto environment. Otherwise, a new skeleton yocto/ directory is created and the environment created within that. 
+
+For example:
 
 ```bash
+# This assumes you're not within a Yocto environment, i.e. typing 'bitbake' gives command not found error
 yb init -s git@github.com:my-company/our-streams.git
 cd yocto
-yb activate nightly
-yb sync -a
 ```
+
+# Commands
+
+## `yb activate`: setting the active spec
+
+Use this command to set the active spec. It doesn't actually make any changes to the Yocto environment. You'll need `yb sync` for that (see below).
+
+```bash
+yb activate nightly
+```
+
+## `yb sync`: make my environment match the active spec
+
+`yb sync` with the `-a/--apply` flag will do what is needed to make your environment reflect that of the activated spec. It currently supports these actions:
+* Clone repos
+* Add/remove layers from bblayers.conf (creating it first if necessary)
+* Switch branches
+* Do fast-forward git pull
+* Create local tracking branch
+* Reset working directory (only if given `--force` flag)
+
+As a precaution, `yb sync` does nothing but report what would have been done. To actually make changes you need to pass the `-a`/`--apply` flag.
+
+## `yb status`: report environment status
+
+The `yb status` command was designed to provide useful status information across all the repos in your Yocto environment. 
+
+Better yet, it works even with vanilla Yocto environments (i.e. ones in which you haven't used `yb init`). As long as you run `yb status` in a terminal in which you have an activated Yocto environment (i.e. `which bitbake` prints a path), yb will find the path to where your layers live and report their statuses.
+
+When run in the context of a yb environment, however, yb can help even more. If a yb environment is found, yb will fetch the current stream to see if any specs were updated. Then it will report how your current environment differs from that of the activated spec.
+
+## `yb run`: run a command for each repo
+ 
+This works in either yb or Yocto environments. 
+
+```bash
+yb run -- git status -s
+```
+
+Project status
+==============
+
+What's working:
+* Basic management of streams and specs
+* `yb status`
+* `yb sync`
 
 License
 ========
