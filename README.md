@@ -14,6 +14,11 @@ All of these tools are great for doing initial environment setup for CI and/or n
 
 Historically, it has been painful to keep all of this in-sync, usually manifesting as emails sent team-wide everytime bblayers.conf needs to change.
 
+Goals and non-goals
+====================
+
+yb strives to be a tool for helping developers with their everyday development tasks. Unlike kas, it does *not* enforce separation of build environment and host. yb is designed to complement the Yocto workflow you're already used to - for example, there is no `yb shell` command. 
+
 Specs and streams: keeping in-sync
 ==========================================
 
@@ -46,11 +51,12 @@ repos:
       meta-filesystems:
       meta-webserver:
       meta-oe:
-
 ```
 </details>
 
 Specs live in **streams**. A stream is just a git repo that you've hosted somewhere accessible by your developers.
+
+If you need to add a layer to your build, just do it in the spec and commit the change to the stream. Developers using that stream with `yb` will automatically have the stream refreshed the next time they run `yb status` or `yb sync` (see below). 
 
 # Quickstart
 
@@ -98,6 +104,8 @@ yb activate nightly
 
 As a precaution, `yb sync` does nothing but report what would have been done. To actually make changes you need to pass the `-a`/`--apply` flag.
 
+When used within a yb environment, `yb sync` will first pull any stream updates.
+
 ## `yb status`: report environment status
 
 The `yb status` command was designed to provide useful status information across all the repos in your Yocto environment. 
@@ -124,6 +132,7 @@ TODO:
 - [ ] Reconstitute the auto-update feature deployed internally
 - [ ] Support modifications to local.conf in specs
 - [ ] Some kind of matrix build support (multiple MACHINE/DISTRO/?)
+- [ ] Usage in CI environment
 - [ ] Documentation...
 - [ ] Tests
 - [ ] User-friendly output for `yb sync`
