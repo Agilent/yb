@@ -1,8 +1,6 @@
 header:
   version: 1
   name: "zeus"
-configs:
-bblayers_conf:
 
 repos:
   poky:
