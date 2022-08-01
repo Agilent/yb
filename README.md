@@ -14,10 +14,49 @@ All of these tools are great for doing initial environment setup for CI and/or n
 
 Historically, it has been painful to keep all of this in-sync, usually manifesting as emails sent team-wide everytime bblayers.conf needs to change.
 
-Streams and specs
-=================
+Specs and streams - sharing configuration
+==========================================
 
-Much like kas' configuration files (see https://kas.readthedocs.io/en/latest/userguide.html), yb has **specs** which are also .yaml files. In fact, the format is nearly the same (though yb can't read kas files - if that's a feature you want please open an issue). 
+Much like kas' configuration files (see https://kas.readthedocs.io/en/latest/userguide.html), yb has **specs** which are also .yaml files. In fact, the format is nearly the same (though interoperability is not guaranteed - if that's a feature you want please open an issue). 
+
+A basic spec looks like this:
+
+<details>
+  <summary>Basic spec (click to expand)</summary>
+  
+```yaml
+header:
+  version: 1
+  name: "nightly"
+
+repos:
+  poky:
+    url: "git://git.yoctoproject.org/poky"
+    refspec: "honister"
+    layers:
+      meta:
+      meta-poky:
+
+  meta-openembedded:
+    url: "git://git.openembedded.org/meta-openembedded"
+    refspec: "honister"
+    layers:
+      meta-networking:
+      meta-python:
+      meta-filesystems:
+      meta-webserver:
+      meta-oe:
+
+```
+</details>
+
+Specs live in **streams**. A stream is just a git repo that you've hosted somewhere accessible by your developers.
+
+To setup yb, you give it the URL to the stream. For example:
+
+```bash
+yb init -s git@github.com:my-company/our-streams.git
+```
 
 
 
