@@ -116,7 +116,7 @@ When run in the context of a yb environment, however, yb can help even more. If 
 
 ## `yb run`: run a command for each repo
  
-This works in either yb or Yocto environments. 
+This works in either yb or Yocto environments. It doesn't matter what directory you run it in as long as yb can find the environment.
 
 ```bash
 yb run -- git status -s
