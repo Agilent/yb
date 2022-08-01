@@ -66,7 +66,7 @@ A bare Yocto environment is one in which you aren't using any specs or streams. 
 
 ## yb environment
 
-A yb environment is created by providing a stream URL to `yb init`. If you do it within an activated Yocto environment, then the yb environment is constructed within the Yocto environment. Otherwise, a new skeleton yocto/ directory is created and the environment created within that. 
+A yb environment is created by providing a stream URI to `yb init`. If you do it within an activated Yocto environment, then the yb environment is constructed within the Yocto environment. Otherwise, a new skeleton yocto/ directory is created and the environment created within that. 
 
 For example:
 
@@ -80,7 +80,7 @@ cd yocto
 
 ## `yb activate`: setting the active spec
 
-Use this command to set the active spec. It doesn't actually make any changes to the Yocto environment. You'll need `yb sync` for that (see below).
+Use this command to set the active spec. It doesn't actually make any changes to your layers or confs. You'll need `yb sync` for that (see below).
 
 ```bash
 yb activate nightly
@@ -118,9 +118,36 @@ Project status
 ==============
 
 What's working:
-* Basic management of streams and specs
-* `yb status`
-* `yb sync`
+* Everything described above, plus a few other utility commands (e.g. `yb list` to view specs and streams)
+
+TODO:
+- [ ] Reconstitute the auto-update feature deployed internally
+- [ ] Support modifications to local.conf in specs
+- [ ] Some kind of matrix build support (multiple MACHINE/DISTRO/?)
+- [ ] Documentation...
+- [ ] Tests
+- [ ] User-friendly output for `yb sync`
+- [ ] Make updating streams more robust than just a `git pull`
+- [ ] Support some kind of local stream? (for now, just use a local git repo - file:// works as a URI)
+- [ ] Make `--porcelain` flag more than just dumping internal structures as JSON which are liable to change; and make it work for other commands
+
+Possible TODOs (i.e. features I probably won't use but that other tools support - submit issue reports please)
+- [ ] Layer patches
+
+Ideas:
+- [ ] Maybe menuconfig like kas? 
+- [ ] Multiconfig support
+- [ ] Some kind of `yb stash`/`yb stash pop` (like `git stash`/`git stash pop`) across all layers/local.conf at once. Would be useful for doing a quick build in between experiementing.
+
+Building
+========
+
+This software requires a nightly Rust compiler.  
+
+Why not Python?
+===============
+
+Basically because [this](https://xkcd.com/1987/). Rust lets you build statically-linked binaries with no hassle. There is no beating that for distribution. Also, the type system and ecosystem is great.
 
 License
 ========
