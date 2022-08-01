@@ -84,7 +84,7 @@ cd yocto
 
 # Commands
 
-## `yb activate`: setting the active spec
+## `yb activate`: set the active spec
 
 Use this command to set the active spec. It doesn't actually make any changes to your layers or confs. You'll need `yb sync` for that (see below).
 
