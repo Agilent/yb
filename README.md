@@ -52,13 +52,14 @@ repos:
 
 Specs live in **streams**. A stream is just a git repo that you've hosted somewhere accessible by your developers.
 
-To setup yb, you give it the URL to the stream. For example:
+To setup yb, use `yb init` and give it the URL to the stream. This command creates a skeleton yocto/ directory with a hidden .yb directory. If you cd into that directory, you can then use the `yb activate` and `yb sync -a` commands. For example:
 
 ```bash
 yb init -s git@github.com:my-company/our-streams.git
+cd yocto
+yb activate nightly
+yb sync -a
 ```
-
-
 
 License
 ========
