@@ -111,9 +111,19 @@ yb activate nightly
 | ------------- | ------------- |
 | :heavy_check_mark:  | :heavy_check_mark:  |
 
-The `yb status` command was designed to provide useful status information across all the repos in your Yocto env. 
+The `yb status` command was designed to provide useful status information across all the repos in your Yocto env.
 
 Better yet, it also works in vanilla Yocto envs. As long as you run `yb status` in a terminal in which you have an activated Yocto env (i.e. `which bitbake` prints a path), yb will find the path to where your layers live and report their statuses.
+
+| ![yb status with vanilla Yocto env](/images/yb.0.0.11.status.vanilla.gif) | 
+|:--:| 
+| `yb status` is run in the context of a vanilla Yocto env. |
+
+Use the `--skip-unremarkable` / `-s` flag to hide repos for which there is no actionable status information. The result is a more concise summary.
+
+| ![yb status with vanilla Yocto env](/images/yb.0.0.11.status.vanilla.skip.unremarkable.gif) | 
+|:--:| 
+| `yb status` is run in the context of a vanilla Yocto env with the `--skip-unremarkable` / `-s` flag. |
 
 When run in the context of a yb env, however, yb can help even more. If a yb env is found, yb will fetch the current stream to see if any specs were updated. Then it will report how your current env differs from that of the activated spec.
 
@@ -150,8 +160,12 @@ When used within a yb env, `yb sync` will first pull any stream updates.
 This works in either yb or Yocto env. It doesn't matter what directory you run it in as long as yb can find the env.
 
 ```bash
-yb run -- git status -s
+yb run -n -- git branch --show-current
 ```
+
+| ![yb run](/images/yb.0.0.11.run.show.branch.gif) | 
+|:--:| 
+| `yb run` using the `-no-return-codes`/`-n` flag to display just the current branch of each repo. |
 
 Project status
 ==============
