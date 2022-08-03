@@ -96,6 +96,9 @@ Note that even if you pass a stream to `yb init`, no layers are cloned yet. You'
 # Commands
 
 ## `yb activate`: set the active spec
+| Vanilla Yocto env | yb env |
+| ------------- | ------------- |
+| :x:  | :heavy_check_mark:  |
 
 Use this command to set the active spec. It doesn't actually make any changes to your layers or confs. You'll need `yb sync` for that (see below).
 
@@ -104,10 +107,13 @@ yb activate nightly
 ```
 
 ## `yb status`: report env status
+| Vanilla Yocto env | yb env |
+| ------------- | ------------- |
+| :heavy_check_mark:  | :heavy_check_mark:  |
 
 The `yb status` command was designed to provide useful status information across all the repos in your Yocto env. 
 
-Better yet, it works even with vanilla Yocto env (i.e. ones in which you haven't used `yb init`). As long as you run `yb status` in a terminal in which you have an activated Yocto env (i.e. `which bitbake` prints a path), yb will find the path to where your layers live and report their statuses.
+Better yet, it also works in vanilla Yocto envs. As long as you run `yb status` in a terminal in which you have an activated Yocto env (i.e. `which bitbake` prints a path), yb will find the path to where your layers live and report their statuses.
 
 When run in the context of a yb env, however, yb can help even more. If a yb env is found, yb will fetch the current stream to see if any specs were updated. Then it will report how your current env differs from that of the activated spec.
 
@@ -116,6 +122,9 @@ When run in the context of a yb env, however, yb can help even more. If a yb env
 | `yb status` is run in the context of a yb env with an activated spec. |
 
 ## `yb sync`: make my env match the active spec
+| Vanilla Yocto env | yb env |
+| ------------- | ------------- |
+| :x:  | :heavy_check_mark:  |
 
 `yb sync` with the `-a/--apply` flag will do what is needed to make your env reflect that of the activated spec. It currently supports these actions:
 * Clone repos
@@ -134,7 +143,10 @@ When used within a yb env, `yb sync` will first pull any stream updates.
 | `yb sync` is first run in dry-run only mode (the default) to show what would be done. Then it is run again with `--apply`/`-a` flag. Finally, `yb status` is run to show that the env is up-to-date. |
 
 ## `yb run`: run a command for each repo
- 
+| Vanilla Yocto env | yb env |
+| ------------- | ------------- |
+| :heavy_check_mark:  | :heavy_check_mark:  |
+
 This works in either yb or Yocto env. It doesn't matter what directory you run it in as long as yb can find the env.
 
 ```bash
