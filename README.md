@@ -58,6 +58,12 @@ Specs live in **streams**. A stream is just a git repo that you've hosted somewh
 
 If you need to add a layer to your build, just do it in the spec and commit the change to the stream. Developers using that stream with `yb` will automatically have the stream refreshed the next time they run `yb status` or `yb sync` (see below). 
 
+# Installation
+
+The easiest way to install yb is to use the pre-compiled, statically-linked binary available here: https://github.com/Agilent/yb/releases/tag/0.0.11. Simply download and unpack into PATH. It should run on any modern-ish 64-bit Linux system. If you want binaries for other systems (e.g. Windows or 32-bit Linux) please file an issue.
+
+Alternatively, you can build yb yourself. You'll need a nightly Rust compiler. To build and run, use ```cargo run -- --help``` (equivalent to doing `yb --help`).
+
 # Quickstart
 
 yb supports two kinds of environments: bare Yocto and yb.
@@ -148,11 +154,6 @@ Ideas:
 - [ ] Maybe menuconfig like kas? 
 - [ ] Multiconfig support
 - [ ] Some kind of `yb stash`/`yb stash pop` (like `git stash`/`git stash pop`) across all layers/local.conf at once. Would be useful for doing a quick build in between experiementing.
-
-Building
-========
-
-This software requires a nightly Rust compiler.  
 
 Why not Python?
 ===============
