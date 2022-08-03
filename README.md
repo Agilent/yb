@@ -83,6 +83,8 @@ To do the conversion, simply activate your Yocto env as usual and then run `yb i
 2. `yb init` (or `yb init -s PATH_TO_STREAM`)
 3. Try running `yb status`
 
+For a demo stream you can use right now, see https://github.com/Agilent/yb-demo-specs.
+
 ## Creating a new yb env from scratch
 
 You can create a new yb env (and skeleton yocto/ directory) by running `yb init` outside of any existing environments:
@@ -92,6 +94,8 @@ You can create a new yb env (and skeleton yocto/ directory) by running `yb init`
 3. cd yocto
 
 Note that even if you pass a stream to `yb init`, no layers are cloned yet. You'll need `yb sync` for that (see below).
+
+For a demo stream you can use right now, see https://github.com/Agilent/yb-demo-specs.
 
 # Commands
 
