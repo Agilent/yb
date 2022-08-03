@@ -179,7 +179,6 @@ What's working:
 
 TODO:
 - [ ] Reconstitute the auto-update feature deployed internally
-- [ ] Screenshots in README!
 - [ ] Support modifications to local.conf in specs
 - [ ] Some kind of matrix build support (multiple MACHINE/DISTRO/?)
 - [ ] Usage in CI environment
