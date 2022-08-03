@@ -98,6 +98,18 @@ Use this command to set the active spec. It doesn't actually make any changes to
 yb activate nightly
 ```
 
+## `yb status`: report environment status
+
+The `yb status` command was designed to provide useful status information across all the repos in your Yocto environment. 
+
+Better yet, it works even with vanilla Yocto environments (i.e. ones in which you haven't used `yb init`). As long as you run `yb status` in a terminal in which you have an activated Yocto environment (i.e. `which bitbake` prints a path), yb will find the path to where your layers live and report their statuses.
+
+When run in the context of a yb environment, however, yb can help even more. If a yb environment is found, yb will fetch the current stream to see if any specs were updated. Then it will report how your current environment differs from that of the activated spec.
+
+| ![yb status with yb environment](/images/yb.0.0.11.status.missing.repo.gif) | 
+|:--:| 
+| `yb status` is run in the context of a yb environment with an activated spec. |
+
 ## `yb sync`: make my environment match the active spec
 
 `yb sync` with the `-a/--apply` flag will do what is needed to make your environment reflect that of the activated spec. It currently supports these actions:
@@ -112,17 +124,9 @@ As a precaution, `yb sync` does nothing but report what would have been done. To
 
 When used within a yb environment, `yb sync` will first pull any stream updates.
 
-## `yb status`: report environment status
-
-The `yb status` command was designed to provide useful status information across all the repos in your Yocto environment. 
-
-Better yet, it works even with vanilla Yocto environments (i.e. ones in which you haven't used `yb init`). As long as you run `yb status` in a terminal in which you have an activated Yocto environment (i.e. `which bitbake` prints a path), yb will find the path to where your layers live and report their statuses.
-
-When run in the context of a yb environment, however, yb can help even more. If a yb environment is found, yb will fetch the current stream to see if any specs were updated. Then it will report how your current environment differs from that of the activated spec.
-
-| ![yb status with yb environment](/images/yb.0.0.11.status.missing.repo.gif) | 
+| ![yb sync and status](/images/yb.0.0.11.sync.and.status.gif) | 
 |:--:| 
-| `yb status` with activated yb spec |
+| `yb sync` is first run in dry-run only mode (the default) to show what would be done. Then it is run again with `--apply`/`-a` flag. Finally, `yb status` is run to show that the environment is up-to-date. |
 
 ## `yb run`: run a command for each repo
  
