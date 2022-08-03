@@ -120,6 +120,8 @@ Better yet, it works even with vanilla Yocto environments (i.e. ones in which yo
 
 When run in the context of a yb environment, however, yb can help even more. If a yb environment is found, yb will fetch the current stream to see if any specs were updated. Then it will report how your current environment differs from that of the activated spec.
 
+![This is an image](/images/yb.0.0.11.status.missing.repo.gif)
+
 ## `yb run`: run a command for each repo
  
 This works in either yb or Yocto environments. It doesn't matter what directory you run it in as long as yb can find the environment.
