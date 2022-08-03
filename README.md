@@ -64,29 +64,34 @@ The easiest way to install yb is to use the pre-compiled, statically-linked bina
 
 Alternatively, you can build yb yourself. You'll need a nightly Rust compiler. To build and run, use ```cargo run -- --help``` (equivalent to doing `yb --help`).
 
-# Quickstart
+# Basic usage
 
-yb supports two kinds of environments: bare Yocto and yb.
+yb supports two kinds of environments ("envs" for short): vanilla Yocto and yb. You'll know you have a yb env if you see a hidden .yb/ directory inside your yocto/ directory.
 
-## Bare Yocto
+## Vanilla Yocto
 
-A bare Yocto environment is one in which you aren't using any specs or streams. In this case, yb operates with reduced functionality but can still be extremely useful. See for example the `yb status` command below. To use:
+A vanilla Yocto env is one in which you haven't (yet) used `yb init` to initialize a yb env. In this case, yb operates with reduced functionality but can still be extremely useful. See for example the `yb status` command below. To use:
 
-1. In a terminal, activate your Yocto environment. This is usually a matter of doing `source setupsdk` or `source oe-init-build-env`. 
-2. Run `yb init`
-3. Try running `yb status` 
+1. In a terminal, activate your Yocto env. This is usually a matter of doing `source setupsdk` or `source oe-init-build-env`. 
+2. Try running `yb status`
 
-## yb environment
+## Converting vanilla Yocto env to yb env
 
-A yb environment is created by providing a stream URI to `yb init`. If you do it within an activated Yocto environment, then the yb environment is constructed within the Yocto environment. Otherwise, a new skeleton yocto/ directory is created and the environment created within that. 
+To do the conversion, simply activate your Yocto env as usual and then run `yb init`:
 
-For example:
+1. `source setupsdk` or `source oe-init-build-env`
+2. `yb init` (or `yb init -s PATH_TO_STREAM`)
+3. Try running `yb status`
 
-```bash
-# This assumes you're not within a Yocto environment, i.e. typing 'bitbake' gives command not found error
-yb init -s git@github.com:my-company/our-streams.git
-cd yocto
-```
+## Creating a new yb env from scratch
+
+You can create a new yb env (and skeleton yocto/ directory) by running `yb init` outside of any existing environments:
+
+1. Ensure you are _not_ in the context of an existing yb or vanilla Yocto env. If you are, launch a new terminal and/or cd somewhere else.
+2. `yb init` (or `yb init -s PATH_TO_STREAM`)
+3. cd yocto
+
+Note that even if you pass a stream to `yb init`, no layers are cloned yet. You'll need `yb sync` for that (see below).
 
 # Commands
 
@@ -98,21 +103,21 @@ Use this command to set the active spec. It doesn't actually make any changes to
 yb activate nightly
 ```
 
-## `yb status`: report environment status
+## `yb status`: report env status
 
-The `yb status` command was designed to provide useful status information across all the repos in your Yocto environment. 
+The `yb status` command was designed to provide useful status information across all the repos in your Yocto env. 
 
-Better yet, it works even with vanilla Yocto environments (i.e. ones in which you haven't used `yb init`). As long as you run `yb status` in a terminal in which you have an activated Yocto environment (i.e. `which bitbake` prints a path), yb will find the path to where your layers live and report their statuses.
+Better yet, it works even with vanilla Yocto env (i.e. ones in which you haven't used `yb init`). As long as you run `yb status` in a terminal in which you have an activated Yocto env (i.e. `which bitbake` prints a path), yb will find the path to where your layers live and report their statuses.
 
-When run in the context of a yb environment, however, yb can help even more. If a yb environment is found, yb will fetch the current stream to see if any specs were updated. Then it will report how your current environment differs from that of the activated spec.
+When run in the context of a yb env, however, yb can help even more. If a yb env is found, yb will fetch the current stream to see if any specs were updated. Then it will report how your current env differs from that of the activated spec.
 
-| ![yb status with yb environment](/images/yb.0.0.11.status.missing.repo.gif) | 
+| ![yb status with yb env](/images/yb.0.0.11.status.missing.repo.gif) | 
 |:--:| 
-| `yb status` is run in the context of a yb environment with an activated spec. |
+| `yb status` is run in the context of a yb env with an activated spec. |
 
-## `yb sync`: make my environment match the active spec
+## `yb sync`: make my env match the active spec
 
-`yb sync` with the `-a/--apply` flag will do what is needed to make your environment reflect that of the activated spec. It currently supports these actions:
+`yb sync` with the `-a/--apply` flag will do what is needed to make your env reflect that of the activated spec. It currently supports these actions:
 * Clone repos
 * Add/remove layers from bblayers.conf (creating it first if necessary)
 * Switch branches
@@ -122,15 +127,15 @@ When run in the context of a yb environment, however, yb can help even more. If 
 
 As a precaution, `yb sync` does nothing but report what would have been done. To actually make changes you need to pass the `-a`/`--apply` flag.
 
-When used within a yb environment, `yb sync` will first pull any stream updates.
+When used within a yb env, `yb sync` will first pull any stream updates.
 
 | ![yb sync and status](/images/yb.0.0.11.sync.and.status.gif) | 
 |:--:| 
-| `yb sync` is first run in dry-run only mode (the default) to show what would be done. Then it is run again with `--apply`/`-a` flag. Finally, `yb status` is run to show that the environment is up-to-date. |
+| `yb sync` is first run in dry-run only mode (the default) to show what would be done. Then it is run again with `--apply`/`-a` flag. Finally, `yb status` is run to show that the env is up-to-date. |
 
 ## `yb run`: run a command for each repo
  
-This works in either yb or Yocto environments. It doesn't matter what directory you run it in as long as yb can find the environment.
+This works in either yb or Yocto env. It doesn't matter what directory you run it in as long as yb can find the env.
 
 ```bash
 yb run -- git status -s
