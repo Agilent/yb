@@ -41,9 +41,9 @@ pub trait MultiProgressHelpers {
         message: impl Into<Cow<'static, str>>,
     ) -> ProgressBar;
 
-    fn note(&self, s: &str);
-    fn warn(&self, s: &str);
-    fn error(&self, s: &str);
+    fn note<S>(&self, s: S) where S: AsRef<str>;
+    fn warn<S>(&self, s: S) where S: AsRef<str>;
+    fn error<S>(&self, s: S) where S: AsRef<str>;
 }
 
 impl MultiProgressHelpers for MultiProgress {
@@ -81,18 +81,18 @@ impl MultiProgressHelpers for MultiProgress {
         ret
     }
 
-    fn note(&self, s: &str) {
+    fn note<S>(&self, s: S) where S: AsRef<str> {
         let header = Style::from_dotted_str("cyan.bold").apply_to("note");
-        self.suspend(|| eprintln!("{}: {}", header, s));
+        self.suspend(|| eprintln!("{}: {}", header, s.as_ref()));
     }
 
-    fn warn(&self, s: &str) {
+    fn warn<S>(&self, s: S) where S: AsRef<str> {
         let header = Style::from_dotted_str("yellow.bold").apply_to("warning");
-        self.suspend(|| eprintln!("{}: {}", header, s));
+        self.suspend(|| eprintln!("{}: {}", header, s.as_ref()));
     }
 
-    fn error(&self, s: &str) {
+    fn error<S>(&self, s: S) where S: AsRef<str> {
         let header = Style::from_dotted_str("red.bold").apply_to("error");
-        self.suspend(|| eprintln!("\n{}: {}\n", header, s));
+        self.suspend(|| eprintln!("\n{}: {}\n", header, s.as_ref()));
     }
 }

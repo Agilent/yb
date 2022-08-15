@@ -5,6 +5,7 @@ use crate::commands::activate::ActivateCommand;
 use crate::commands::init::InitCommand;
 use crate::commands::list::ListCommand;
 use crate::commands::run::RunCommand;
+use crate::commands::self_update::SelfUpdateCommand;
 use crate::commands::status::*;
 use crate::commands::stream::{
     StreamAddCommand, StreamListCommand, StreamSubcommands, StreamUpdateCommand,
@@ -20,6 +21,7 @@ mod run;
 pub mod status;
 mod stream;
 mod sync;
+mod self_update;
 
 #[enum_dispatch]
 pub trait SubcommandRunner {
@@ -31,6 +33,7 @@ pub trait SubcommandRunner {
 pub enum Subcommands {
     Init(InitCommand),
     Run(RunCommand),
+    SelfUpdate(SelfUpdateCommand),
     Status(StatusCommand),
     #[clap(subcommand)]
     Stream(StreamSubcommands),
