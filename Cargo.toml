@@ -19,7 +19,7 @@ eyre = "0.6"
 flate2 = "1.0.24"
 git2 = "0.15.0"
 itertools = "0.10.3"
-indicatif = { version = "0.17.0", features = ["improved_unicode"] }
+indicatif = { git = "https://github.com/chris-laplante/indicatif.git", branch = "cpl/zombie-prune-clear", features = ["improved_unicode"] }
 coredump = "0.1.1"
 lazy_static = "1.4.0"
 libc = "0.2.126"
