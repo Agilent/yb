@@ -34,17 +34,3 @@ impl SubcommandRunner for SelfUpdateCommand {
         Ok(())
     }
 }
-
-struct DownloadProgress<R> {
-    inner: R,
-    progress_bar: ProgressBar,
-}
-
-impl<R: Read> Read for DownloadProgress<R> {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.inner.read(buf).map(|n| {
-            self.progress_bar.inc(n as u64);
-            n
-        })
-    }
-}
