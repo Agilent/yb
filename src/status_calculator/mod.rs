@@ -51,13 +51,13 @@ pub fn compare_branch_to_remote_tracking_branch(
 ) -> YbResult<UpstreamComparison> {
     let remote_branch_name = tracking_branch.to_string();
     let ahead_count = create_revwalk(
-        &repo,
-        &*format!("{1}..{0}", local_branch_name, remote_branch_name),
+        repo,
+        &format!("{1}..{0}", local_branch_name, remote_branch_name),
     )?
     .count();
     let behind_count = create_revwalk(
-        &repo,
-        &*format!("{0}..{1}", local_branch_name, remote_branch_name),
+        repo,
+        &format!("{0}..{1}", local_branch_name, remote_branch_name),
     )?
     .count();
     Ok(match (ahead_count > 0, behind_count > 0) {
@@ -131,7 +131,7 @@ fn compute_repo_status<F>(
     c: &mut F,
 ) -> YbResult<ComputedStatusEntry>
 where
-    F: FnMut(StatusCalculatorEvent) -> (),
+    F: FnMut(StatusCalculatorEvent),
 {
     // First things first, do a 'git fetch'
     {
@@ -152,7 +152,7 @@ where
     }
 
     // See if we can map the repo to a spec repo
-    let spec_repo_status = find_corresponding_spec_repo_for_repo(&repo, &active_spec_repos)?;
+    let spec_repo_status = find_corresponding_spec_repo_for_repo(&repo, active_spec_repos)?;
 
     let current_branch_status = {
         // TODO: gracefully handle detached HEAD and repos without a tracked branch
@@ -160,7 +160,7 @@ where
         let local_branch_name = local_branch.name()?.unwrap().to_string();
 
         BranchStatus {
-            local_branch_name: local_branch_name.clone(),
+            local_branch_name,
             upstream_branch_status: compare_branch_to_upstream(&repo, &local_branch)?,
         }
     };
@@ -194,11 +194,11 @@ where
 
 pub fn compute_status<F>(mut options: StatusCalculatorOptions, mut c: F) -> YbResult<ComputedStatus>
 where
-    F: FnMut(StatusCalculatorEvent) -> (),
+    F: FnMut(StatusCalculatorEvent),
 {
     let config = &options.config;
     let arena = toolshed::Arena::new();
-    let context = require_tool_context(&config, &arena)?;
+    let context = require_tool_context(config, &arena)?;
 
     let sources_subdirs = match list_subdirectories_sorted(&context.sources_dir())
         .map_err(|e| e.downcast::<io::Error>())
@@ -232,7 +232,7 @@ where
 
     let repos = sources_subdirs_with_repo
         .iter()
-        .filter_map(|v| (*v).1.as_ref());
+        .filter_map(|v| v.1.as_ref());
 
     check_repository_workdirs_unique(repos.clone())?;
 
@@ -257,7 +257,7 @@ where
 
         if let Some(repo) = repo_maybe {
             let status =
-                compute_repo_status(repo, &subdir, &mut options, &active_spec_repos, &mut c)?;
+                compute_repo_status(repo, subdir, &mut options, &active_spec_repos, &mut c)?;
             if let ComputedStatusEntry::OnDiskRepo(OnDiskRepoStatus {
                 corresponding_spec_repo: Some(c),
                 ..

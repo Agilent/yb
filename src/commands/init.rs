@@ -40,7 +40,7 @@ pub struct InitCommand {
 impl SubcommandRunner for InitCommand {
     fn run(&self, config: &mut Config, _mp: &MultiProgress) -> YbResult<()> {
         let arena = toolshed::Arena::new();
-        let context = determine_tool_context(&config, &arena)?;
+        let context = determine_tool_context(config, &arena)?;
 
         let mut new_yocto_dir = None;
         match context {
@@ -91,14 +91,14 @@ impl SubcommandRunner for InitCommand {
             let new_config = new_yocto_dir.map(|d| config.clone_with_cwd(d));
             let config = new_config.as_ref().unwrap_or(config);
 
-            let mut add_stream_opts = AddStreamOptions::new(&config);
+            let mut add_stream_opts = AddStreamOptions::new(config);
             add_stream_opts.uri(default_stream_uri.clone());
             op_add_stream(add_stream_opts)?;
 
             if let Some(default_spec_name) = &self.default_spec {
                 // TODO deduplicate code
                 let arena = toolshed::Arena::new();
-                let mut yb_env = require_yb_env(&config, &arena)?;
+                let mut yb_env = require_yb_env(config, &arena)?;
 
                 let spec = yb_env.find_spec(&default_spec_name)?.cloned();
                 if let Some(spec) = spec {

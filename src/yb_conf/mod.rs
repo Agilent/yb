@@ -60,5 +60,5 @@ pub fn load_yb_conf_current_version_only<R>(f: R) -> YbResult<YbConf>
 where
     R: io::Read,
 {
-    serde_yaml::from_reader::<_, YbConf>(f).or_else(|e| Err(e.into()))
+    serde_yaml::from_reader::<_, YbConf>(f).map_err(|e| e.into())
 }

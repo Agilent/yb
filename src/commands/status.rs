@@ -236,7 +236,7 @@ impl SubcommandRunner for StatusCommand {
                                                     let last_message = subdir_lines.last().unwrap();
                                                     subdir_lines.push(
                                                         mp.println_after(
-                                                            &last_message,
+                                                            last_message,
                                                             Style::new()
                                                                 .red()
                                                                 .apply_to(format!(
@@ -269,9 +269,7 @@ impl SubcommandRunner for StatusCommand {
                                     }
                                     CorrespondingSpecRepoStatus::PossibleMatch { .. } => {
                                         corresponding_spec_repo_message.set_message(
-                                                Style::new().red().on_white().apply_to(format!(
-                                                    "\tthis directory has same name of a spec repo, but isn't tracking any expected remote?"
-                                                )).to_string(),
+                                                Style::new().red().on_white().apply_to("\tthis directory has same name of a spec repo, but isn't tracking any expected remote?".to_string()).to_string(),
                                             );
 
                                         branch_status_color =
@@ -297,7 +295,7 @@ impl SubcommandRunner for StatusCommand {
                                     );
 
                                     let last_message = subdir_lines.last().unwrap();
-                                    subdir_lines.push(mp.println_after(&last_message, oneline));
+                                    subdir_lines.push(mp.println_after(last_message, oneline));
                                 }
                             }
 
@@ -311,7 +309,7 @@ impl SubcommandRunner for StatusCommand {
                             {
                                 let last_message = subdir_lines.last().unwrap();
                                 subdir_lines.push(mp.println_after(
-                                    &last_message,
+                                    last_message,
                                     Style::default().red().apply_to(short_status).to_string(),
                                 ));
                             }

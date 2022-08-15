@@ -83,16 +83,16 @@ impl MultiProgressHelpers for MultiProgress {
 
     fn note(&self, s: &str) {
         let header = Style::from_dotted_str("cyan.bold").apply_to("note");
-        self.suspend(|| eprintln!("{}: {}", header.to_string(), s));
+        self.suspend(|| eprintln!("{}: {}", header, s));
     }
 
     fn warn(&self, s: &str) {
         let header = Style::from_dotted_str("yellow.bold").apply_to("warning");
-        self.suspend(|| eprintln!("{}: {}", header.to_string(), s));
+        self.suspend(|| eprintln!("{}: {}", header, s));
     }
 
     fn error(&self, s: &str) {
         let header = Style::from_dotted_str("red.bold").apply_to("error");
-        self.suspend(|| eprintln!("\n{}: {}\n", header.to_string(), s));
+        self.suspend(|| eprintln!("\n{}: {}\n", header, s));
     }
 }

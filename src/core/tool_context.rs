@@ -1,10 +1,10 @@
-use color_eyre::{Help, SectionExt};
+use color_eyre::{Help};
 use std::env;
-use std::fmt::{Display, Formatter};
+
 use std::path::{Path, PathBuf};
 
 use git2::Repository;
-use tracing::Level;
+
 
 use crate::config::Config;
 use crate::errors::YbResult;

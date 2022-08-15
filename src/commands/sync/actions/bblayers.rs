@@ -54,7 +54,7 @@ BBPATH = "${TOPDIR}"
 BBFILES ??= """##,
             );
 
-            bblayers_content.push_str(&*format!("\n\nBBLAYERS ?= \"{}\"", layer_path));
+            bblayers_content.push_str(&format!("\n\nBBLAYERS ?= \"{}\"", layer_path));
 
             let mut f = OpenOptions::new()
                 .write(true)

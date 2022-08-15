@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use std::path::PathBuf;
+
 
 use console::Style;
 use git2::Repository;
@@ -50,7 +50,7 @@ impl SubcommandRunner for SyncCommand {
         let mut yb_env = require_yb_env(config, &arena)?;
 
         if let Some(spec_name) = &self.spec {
-            activate_spec(&mut yb_env, &spec_name)?;
+            activate_spec(&mut yb_env, spec_name)?;
         }
 
         if yb_env.active_spec().is_none() {
@@ -130,64 +130,62 @@ impl SubcommandRunner for SyncCommand {
                                         ));
                                     }
                                     UpstreamComparison::Ahead(_) => {
-                                        let msg = format!("{} is ahead of remote and I don't know what to do about it", status_data.path.display().to_string());
+                                        let msg = format!("{} is ahead of remote and I don't know what to do about it", status_data.path.display());
                                         mp.error(&msg);
                                         panic!();
                                     }
                                     UpstreamComparison::Diverged { .. } => unimplemented!(),
                                 }
-                            } else {
-                                if remote_match.local_branches_tracking_remote.is_empty() {
-                                    let new_local_branch_name =
-                                        determine_local_branch_name_for_checkout(
-                                            &status_data.repo,
-                                            &remote_match.spec_repo.refspec,
-                                        )?;
+                            } else if remote_match.local_branches_tracking_remote.is_empty() {
+                                let new_local_branch_name =
+                                    determine_local_branch_name_for_checkout(
+                                        &status_data.repo,
+                                        &remote_match.spec_repo.refspec,
+                                    )?;
 
-                                    sync_actions.push(
-                                        box CreateLocalTrackingBranchSyncAction::new(
-                                            status_data.path.clone(),
-                                            new_local_branch_name.clone(),
-                                            RemoteTrackingBranch {
-                                                branch_name: remote_match.spec_repo.refspec.clone(),
-                                                remote_name: remote_match
-                                                    .matching_remote_name
-                                                    .clone(),
-                                            },
-                                        ),
-                                    );
-
-                                    sync_actions.push(box CheckoutBranchSyncAction::new(
+                                sync_actions.push(
+                                    box CreateLocalTrackingBranchSyncAction::new(
                                         status_data.path.clone(),
                                         new_local_branch_name.clone(),
-                                    ));
+                                        RemoteTrackingBranch {
+                                            branch_name: remote_match.spec_repo.refspec.clone(),
+                                            remote_name: remote_match
+                                                .matching_remote_name
+                                                .clone(),
+                                        },
+                                    ),
+                                );
 
-                                    sync_actions.push(box FastForwardPullSyncAction::new(
-                                        status_data.path.clone(),
-                                    ));
-                                } else {
-                                    let optimal_branch = determine_optimal_checkout_branch(
-                                        &remote_match.local_branches_tracking_remote,
-                                    )
-                                    .unwrap();
+                                sync_actions.push(box CheckoutBranchSyncAction::new(
+                                    status_data.path.clone(),
+                                    new_local_branch_name.clone(),
+                                ));
 
-                                    sync_actions.push(box CheckoutBranchSyncAction::new(
-                                        status_data.path.clone(),
-                                        optimal_branch.local_tracking_branch.branch_name.clone(),
-                                    ));
+                                sync_actions.push(box FastForwardPullSyncAction::new(
+                                    status_data.path.clone(),
+                                ));
+                            } else {
+                                let optimal_branch = determine_optimal_checkout_branch(
+                                    &remote_match.local_branches_tracking_remote,
+                                )
+                                .unwrap();
 
-                                    match optimal_branch.upstream_comparison {
-                                        UpstreamComparison::UpToDate => {}
-                                        UpstreamComparison::Behind(_) => {
-                                            sync_actions.push(box FastForwardPullSyncAction::new(
-                                                status_data.path.clone(),
-                                            ));
-                                        }
-                                        UpstreamComparison::Ahead(_ahead) => {
-                                            // TODO: suggest pushing changes?
-                                        }
-                                        UpstreamComparison::Diverged { .. } => unimplemented!(),
+                                sync_actions.push(box CheckoutBranchSyncAction::new(
+                                    status_data.path.clone(),
+                                    optimal_branch.local_tracking_branch.branch_name.clone(),
+                                ));
+
+                                match optimal_branch.upstream_comparison {
+                                    UpstreamComparison::UpToDate => {}
+                                    UpstreamComparison::Behind(_) => {
+                                        sync_actions.push(box FastForwardPullSyncAction::new(
+                                            status_data.path.clone(),
+                                        ));
                                     }
+                                    UpstreamComparison::Ahead(_ahead) => {
+                                        // TODO: suggest pushing changes?
+                                    }
+                                    UpstreamComparison::Diverged { .. } => unimplemented!(),
                                 }
                             }
                         }

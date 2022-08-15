@@ -17,7 +17,7 @@ pub struct ActivateCommand {
 impl SubcommandRunner for ActivateCommand {
     fn run(&self, config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
         let arena = toolshed::Arena::new();
-        let mut yb_env = require_yb_env(&config, &arena)?;
+        let mut yb_env = require_yb_env(config, &arena)?;
 
         if yb_env.streams_by_name().len() == 0 {
             mp.warn("couldn't activate a spec because there are no streams");

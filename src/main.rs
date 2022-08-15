@@ -19,9 +19,9 @@ fn parse_args_and_create_config() -> YbResult<(Config, YbOptions)> {
 fn main() {
     let _ = coredump::register_panic_handler();
     if env::var("NO_COLOR") == Err(std::env::VarError::NotPresent) {
-        let _ = color_eyre::install().unwrap();
+        color_eyre::install().unwrap();
     } else {
-        let _ = color_eyre::config::HookBuilder::new()
+        color_eyre::config::HookBuilder::new()
             .theme(color_eyre::config::Theme::new())
             .install()
             .unwrap();

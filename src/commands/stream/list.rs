@@ -12,7 +12,7 @@ pub struct StreamListCommand {}
 impl SubcommandRunner for StreamListCommand {
     fn run(&self, config: &mut Config, _mp: &MultiProgress) -> YbResult<()> {
         let arena = toolshed::Arena::new();
-        let yb_env = require_yb_env(&config, &arena)?;
+        let yb_env = require_yb_env(config, &arena)?;
         let streams_dir = yb_env.streams_dir();
 
         if streams_dir.exists() {

@@ -20,8 +20,8 @@ use crate::util::paths::{is_hidden, is_yaml_file};
 
 // TODO: don't make pub, move logic here
 const STREAM_CONFIG_FILE_VERSION: u32 = 1;
-pub const STREAM_CONTENT_ROOT_SUBDIR: &'static str = "contents";
-pub const STREAM_CONFIG_FILE: &'static str = "stream.yaml";
+pub const STREAM_CONTENT_ROOT_SUBDIR: &str = "contents";
+pub const STREAM_CONFIG_FILE: &str = "stream.yaml";
 
 #[derive(Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub enum StreamKind {
@@ -115,10 +115,10 @@ impl Stream {
     pub fn reload(&self) -> YbResult<Rc<Self>> {
         let repo = &self.repo;
 
-        let upstream_name = get_remote_name_for_current_branch(&repo)?.unwrap();
-        let current_branch_name = get_current_local_branch_name(&repo)?;
+        let upstream_name = get_remote_name_for_current_branch(repo)?.unwrap();
+        let current_branch_name = get_current_local_branch_name(repo)?;
 
-        let mut remote = repo.find_remote(&*upstream_name)?;
+        let mut remote = repo.find_remote(&upstream_name)?;
         let mut fetch_options = FetchOptions::new();
         fetch_options.remote_callbacks(ssh_agent_remote_callbacks());
         remote.fetch(&[] as &[&str], Some(&mut fetch_options), None)?;
@@ -126,7 +126,7 @@ impl Stream {
         let fetch_head = repo.find_reference("FETCH_HEAD")?;
         let fetch_commit = repo.reference_to_annotated_commit(&fetch_head)?;
 
-        do_merge(&repo, &current_branch_name, fetch_commit)?;
+        do_merge(repo, &current_branch_name, fetch_commit)?;
 
         Self::load(self.path.clone())
     }

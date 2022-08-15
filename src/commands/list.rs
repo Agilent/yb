@@ -12,7 +12,7 @@ pub struct ListCommand {}
 impl SubcommandRunner for ListCommand {
     fn run(&self, config: &mut Config, _mp: &MultiProgress) -> YbResult<()> {
         let arena = toolshed::Arena::new();
-        let yb_env = require_yb_env(&config, &arena)?;
+        let yb_env = require_yb_env(config, &arena)?;
         for stream in yb_env.streams_by_name() {
             println!("{}:", stream.0);
             for spec in stream.1.specs_by_name() {

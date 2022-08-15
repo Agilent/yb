@@ -29,13 +29,13 @@ impl<'cfg> UpdateStreamOptions<'cfg> {
 
 pub fn op_update_stream<F>(options: UpdateStreamOptions, mut c: F) -> YbResult<UpdateStreamResult>
 where
-    F: FnMut(UpdateStreamEvent) -> (),
+    F: FnMut(UpdateStreamEvent),
 {
     let mut reloaded_active_spec = None;
     let mut result = UpdateStreamResult::default();
 
     let arena = toolshed::Arena::new();
-    let mut yb_env = require_yb_env(&options.config, &arena)?;
+    let mut yb_env = require_yb_env(options.config, &arena)?;
     if yb_env.active_spec_status().has_active_spec() {
         if let Some(stream) = yb_env.active_stream() {
             c(UpdateStreamEvent::Start);

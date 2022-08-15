@@ -34,7 +34,7 @@ pub fn get_current_local_branch_name(repo: &Repository) -> YbResult<String> {
 pub fn get_remote_tracking_branch_for_current_local_branch(
     repo: &Repository,
 ) -> YbResult<Option<RemoteTrackingBranch>> {
-    get_remote_tracking_branch(&get_current_local_branch(&repo)?)
+    get_remote_tracking_branch(&get_current_local_branch(repo)?)
 }
 
 pub fn get_remote_tracking_branch(branch: &Branch) -> YbResult<Option<RemoteTrackingBranch>> {
@@ -61,7 +61,7 @@ pub fn get_remote_name_for_current_branch(repo: &Repository) -> YbResult<Option<
         .ok_or_else(|| eyre!("branch has no name"))?
         .to_string();
 
-    match repo.branch_upstream_remote(&*branch_ref_name) {
+    match repo.branch_upstream_remote(&branch_ref_name) {
         Err(ref e) if e.code() == ErrorCode::NotFound => Ok(None),
         Ok(name) => Ok(Some(
             name.as_str()
@@ -74,7 +74,7 @@ pub fn get_remote_name_for_current_branch(repo: &Repository) -> YbResult<Option<
 
 pub fn get_remote_for_current_branch(repo: &Repository) -> YbResult<Option<Remote>> {
     get_remote_name_for_current_branch(repo)?
-        .map(|n| repo.find_remote(&*n))
+        .map(|n| repo.find_remote(&n))
         .transpose()
         .map_err(|e| e.into())
 }
@@ -339,7 +339,7 @@ where
             .workdir()
             .ok_or_else(|| eyre!("bare repositories not supported"))?;
         let r = workdir_to_repo.entry(PathBuf::from(workdir)).or_default();
-        r.push(&repo);
+        r.push(repo);
     }
 
     for (workdir, workdir_repos) in workdir_to_repo {

@@ -27,7 +27,7 @@ pub struct RunCommand {
 impl SubcommandRunner for RunCommand {
     fn run(&self, config: &mut Config, _mp: &MultiProgress) -> YbResult<()> {
         let arena = toolshed::Arena::new();
-        let context = require_tool_context(&config, &arena)?;
+        let context = require_tool_context(config, &arena)?;
         let repos = context
             .sources_repos()
             .context("can't enumerate layer repos - was the Yocto environment activated?")?;

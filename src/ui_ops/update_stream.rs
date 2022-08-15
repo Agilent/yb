@@ -42,7 +42,7 @@ impl<'cfg> UiUpdateStreamOptions<'cfg> {
 pub fn ui_op_update_stream(options: UiUpdateStreamOptions) -> YbResult<()> {
     let arena = toolshed::Arena::new();
 
-    let yb_env = match maybe_yb_env(&options.config, &arena)? {
+    let yb_env = match maybe_yb_env(options.config, &arena)? {
         Some(yb_env) => yb_env,
         None => {
             if options.fail_if_no_yb_env {

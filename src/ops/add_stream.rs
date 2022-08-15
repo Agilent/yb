@@ -51,7 +51,7 @@ impl<'cfg> AddStreamOptions<'cfg> {
 
 pub fn op_add_stream(options: AddStreamOptions) -> YbResult<()> {
     let arena = toolshed::Arena::new();
-    let yb_env = require_yb_env(&options.config, &arena)?;
+    let yb_env = require_yb_env(options.config, &arena)?;
 
     let stream_name = options.name.clone().unwrap_or_else(|| "default".into());
 

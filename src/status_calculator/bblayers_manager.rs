@@ -26,7 +26,7 @@ pub fn read_bblayers(build_dir: &PathBuf) -> YbResult<HashSet<Layer>> {
         File::open(&bblayers)
             .with_context(|| format!("failed to read {:?}", &bblayers))?
             .read_to_string(&mut source)?;
-        let res = parse_bitbake_from_str(&*source).clone_for_update();
+        let res = parse_bitbake_from_str(&source).clone_for_update();
         let d = DataSmart::new();
         res.evaluate(&d).unwrap();
         //TODO .with_context(|| format!("failed to evaluate AST for {:?}", &bblayers))?;

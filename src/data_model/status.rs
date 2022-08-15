@@ -212,7 +212,7 @@ pub fn find_local_branches_tracking_remote_branch(
     let filtered = branches?
         .into_iter()
         .filter(|branch| {
-            get_remote_tracking_branch(&branch)
+            get_remote_tracking_branch(branch)
                 .unwrap()
                 .map_or(false, |b| b == *remote_tracking_branch)
         })
@@ -250,7 +250,7 @@ impl RemoteMatchStatus {
     pub fn is_local_branch_tracking_correct_branch(&self, local_branch_name: &String) -> bool {
         self.local_branches_tracking_remote
             .iter()
-            .map(|l| (*l).local_tracking_branch.branch_name.clone())
+            .map(|l| l.local_tracking_branch.branch_name.clone())
             .collect::<Vec<_>>()
             .contains(local_branch_name)
     }
