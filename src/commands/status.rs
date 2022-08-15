@@ -340,19 +340,25 @@ impl SubcommandRunner for StatusCommand {
                     }
 
                     mp.println_before(overall_progress.as_ref().unwrap(), " ");
-                    mp.println_before(overall_progress.as_ref().unwrap(),format!(
-                        "==> {} <==",
-                        Style::from_dotted_str("red.on_white.bold")
-                            .apply_to("missing repositories detected!")
-                    ));
+                    mp.println_before(
+                        overall_progress.as_ref().unwrap(),
+                        format!(
+                            "==> {} <==",
+                            Style::from_dotted_str("red.on_white.bold")
+                                .apply_to("missing repositories detected!")
+                        ),
+                    );
 
                     for missing in missing_repos {
-                        mp.println_after(overall_progress.as_ref().unwrap(),format!(
-                            "{}: {}, remote: {}",
-                            Style::from_dotted_str("bold").apply_to("missing repo"),
-                            missing.name,
-                            missing.spec_repo.url
-                        ));
+                        mp.println_after(
+                            overall_progress.as_ref().unwrap(),
+                            format!(
+                                "{}: {}, remote: {}",
+                                Style::from_dotted_str("bold").apply_to("missing repo"),
+                                missing.name,
+                                missing.spec_repo.url
+                            ),
+                        );
                     }
                 }
                 _ => {}

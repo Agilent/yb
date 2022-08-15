@@ -1,10 +1,9 @@
-use color_eyre::{Help};
+use color_eyre::Help;
 use std::env;
 
 use std::path::{Path, PathBuf};
 
 use git2::Repository;
-
 
 use crate::config::Config;
 use crate::errors::YbResult;
@@ -115,7 +114,9 @@ pub fn require_tool_context<'arena>(
     determine_tool_context(config, arena).and_then(|c| {
         c.ok_or_else(|| {
             tracing::error!("expected a yb or Yocto environment");
-            eyre::eyre!("expected a yb or Yocto environment").suggestion("use yb init").suppress_backtrace(true)
+            eyre::eyre!("expected a yb or Yocto environment")
+                .suggestion("use yb init")
+                .suppress_backtrace(true)
         })
     })
 }

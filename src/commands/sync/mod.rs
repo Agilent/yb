@@ -1,6 +1,5 @@
 use std::fmt::Debug;
 
-
 use console::Style;
 use git2::Repository;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
@@ -143,18 +142,14 @@ impl SubcommandRunner for SyncCommand {
                                         &remote_match.spec_repo.refspec,
                                     )?;
 
-                                sync_actions.push(
-                                    box CreateLocalTrackingBranchSyncAction::new(
-                                        status_data.path.clone(),
-                                        new_local_branch_name.clone(),
-                                        RemoteTrackingBranch {
-                                            branch_name: remote_match.spec_repo.refspec.clone(),
-                                            remote_name: remote_match
-                                                .matching_remote_name
-                                                .clone(),
-                                        },
-                                    ),
-                                );
+                                sync_actions.push(box CreateLocalTrackingBranchSyncAction::new(
+                                    status_data.path.clone(),
+                                    new_local_branch_name.clone(),
+                                    RemoteTrackingBranch {
+                                        branch_name: remote_match.spec_repo.refspec.clone(),
+                                        remote_name: remote_match.matching_remote_name.clone(),
+                                    },
+                                ));
 
                                 sync_actions.push(box CheckoutBranchSyncAction::new(
                                     status_data.path.clone(),

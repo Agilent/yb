@@ -1,8 +1,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use color_eyre::eyre::Result;
 use assert_cmd::Command;
+use color_eyre::eyre::Result;
 use lazy_static::lazy_static;
 use serde_json::Value;
 

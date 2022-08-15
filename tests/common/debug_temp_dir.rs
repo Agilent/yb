@@ -52,8 +52,9 @@ impl AsRef<Path> for DebugTempDir {
 impl Drop for DebugTempDir {
     fn drop(&mut self) {
         if ::std::thread::panicking() {
-            if let Some(d) = self.0
-                .as_ref() { eprintln!("retaining temporary directory at: {:?}", d) }
+            if let Some(d) = self.0.as_ref() {
+                eprintln!("retaining temporary directory at: {:?}", d)
+            }
             ::std::mem::forget(self.0.take())
         }
     }

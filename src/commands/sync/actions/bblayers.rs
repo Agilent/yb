@@ -38,7 +38,10 @@ impl SyncAction for ModifyBBLayersConfSyncAction {
     }
 
     fn apply(&self) -> YbResult<()> {
-        let layer_path = normalize_path(&self.layer_path).to_str().unwrap().to_string();
+        let layer_path = normalize_path(&self.layer_path)
+            .to_str()
+            .unwrap()
+            .to_string();
         if !self.bblayers_path.is_file() {
             assert_eq!(self.action, BBLayersEditAction::AddLayer);
 
