@@ -18,10 +18,10 @@ mod activate;
 mod init;
 mod list;
 mod run;
+mod self_update;
 pub mod status;
 mod stream;
 mod sync;
-mod self_update;
 
 #[enum_dispatch]
 pub trait SubcommandRunner {

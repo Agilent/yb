@@ -1,19 +1,15 @@
-use std::io::Read;
-use std::{io};
-
 use self_update::{cargo_crate_version, Status};
 
-use indicatif::{MultiProgress, ProgressBar};
+use indicatif::MultiProgress;
 
-
-use crate::commands::{SubcommandRunner};
+use crate::commands::SubcommandRunner;
 use crate::errors::YbResult;
-use crate::{Config};
 use crate::util::indicatif::MultiProgressHelpers;
+use crate::Config;
 
 /// Automatically download the latest version of yb
 #[derive(Debug, clap::Parser)]
-pub struct SelfUpdateCommand { }
+pub struct SelfUpdateCommand {}
 
 impl SubcommandRunner for SelfUpdateCommand {
     fn run(&self, _config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
