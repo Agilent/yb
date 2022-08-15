@@ -16,7 +16,6 @@ use crate::errors::YbResult;
 use crate::spec::{ActiveSpec, Spec};
 use crate::stream::Stream;
 use crate::util::paths::{find_dir_recurse_upwards, is_hidden};
-use crate::yb_conf::migrations::{load_yb_conf_with_migrations, PossiblyMigratedYbConf};
 use crate::yb_conf::YbConf;
 
 const YB_ENV_DIRECTORY: &str = ".yb";
@@ -197,17 +196,7 @@ pub fn try_discover_yb_env<S: AsRef<Path>>(
             })?
             .read_to_end(&mut config_file_data)?;
 
-        let conf = match load_yb_conf_with_migrations(config_file_data.as_slice())? {
-            PossiblyMigratedYbConf::Migrated(conf) => {
-                let config_file = OpenOptions::new()
-                    .write(true)
-                    .truncate(true)
-                    .open(&conf_file)?;
-                serde_yaml::to_writer(&config_file, &conf)?;
-                conf
-            }
-            PossiblyMigratedYbConf::NotMigrated(conf) => conf,
-        };
+        let conf: YbConf = serde_yaml::from_slice(config_file_data.as_slice()).unwrap();
 
         let mut active_spec;
         let active_spec_file_path = yb_dir.join(ACTIVE_SPEC_FILE);

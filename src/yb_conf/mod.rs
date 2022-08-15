@@ -1,4 +1,3 @@
-use std::io;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
@@ -6,8 +5,6 @@ use serde::{Deserialize, Serialize};
 use crate::core::tool_context::YoctoEnvironment;
 use crate::errors::YbResult;
 use crate::util::paths::try_diff_paths;
-
-pub mod migrations;
 
 pub const YB_CONF_FORMAT_VERSION: u32 = 2;
 
@@ -56,9 +53,41 @@ impl YbConf {
     }
 }
 
-pub fn load_yb_conf_current_version_only<R>(f: R) -> YbResult<YbConf>
-where
-    R: io::Read,
-{
-    serde_yaml::from_reader::<_, YbConf>(f).map_err(|e| e.into())
+
+#[cfg(test)]
+mod test {
+    use crate::yb_conf::{YB_CONF_FORMAT_VERSION, YbConf};
+
+    #[test]
+    fn fake_version_1_handling() {
+        // This is actually version 2, but I never bumped the format version :/
+        let conf = r#"---
+format_version: 1
+build_dir_relative: "../build"
+sources_dir_relative: "../sources"
+poky_dir_relative: "../sources/poky"
+"#;
+
+        let yb_conf: YbConf = serde_yaml::from_str(conf).unwrap();
+        assert_eq!(yb_conf.format_version, 1);
+    }
+
+    #[test]
+    fn version_1_handling() {
+        let conf = r#"---
+format_version: 1
+build_dir_relative: "../build"
+repos_dir_relative: "../sources"
+poky_dir_relative: "../sources/poky"
+"#;
+
+        let yb_conf: YbConf = serde_yaml::from_str(conf).unwrap();
+        assert_eq!(yb_conf.format_version, 1);
+    }
+
+    #[test]
+    fn format_version_up_to_date() {
+        assert_eq!(YB_CONF_FORMAT_VERSION, 2, "need to update migration code!");
+    }
 }
+
