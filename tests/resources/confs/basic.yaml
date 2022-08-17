@@ -4,7 +4,7 @@ header:
 
 repos:
   poky:
-    url: "git://git.yoctoproject.org/poky"
+    url: "https://github.com/yoctoproject/poky.git"
     refspec: "zeus"
     layers:
       meta:
