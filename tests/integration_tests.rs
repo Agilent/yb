@@ -1,21 +1,15 @@
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use assert_cmd::Command;
 use color_eyre::eyre::Result;
-use lazy_static::lazy_static;
-use serde_json::Value;
 
 use crate::common::DebugTempDir;
 
 mod common;
 
-lazy_static! {
-    static ref YB_EXE_PATH: PathBuf = get_yb_exe_path().unwrap();
-}
-
 fn yb_cmd<P: AsRef<Path>>(cwd: P) -> Command {
-    let mut ret = Command::new(&*YB_EXE_PATH);
+    let mut ret = Command::cargo_bin("yb").unwrap();
     ret.current_dir(cwd).env_clear().env("NO_COLOR", "1");
     ret
 }
@@ -69,32 +63,6 @@ fn yb_init() -> Result<()> {
     Ok(())
 }
 
-fn get_workspace_root() -> Result<PathBuf> {
-    // cargo metadata --format-version=1
-    let start_dir = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
-    let output = Command::new("cargo")
-        .arg("metadata")
-        .arg("--format-version")
-        .arg("1")
-        .current_dir(start_dir)
-        .output()?;
-
-    let r: Value = serde_json::from_slice(output.stdout.as_slice())?;
-    let workspace_root = r.get("workspace_root").unwrap().as_str().unwrap();
-    Ok(PathBuf::from(workspace_root))
-}
-
-fn get_yb_exe_path() -> Result<PathBuf> {
-    let workspace_root = get_workspace_root()?;
-    let target_triple = std::env::var("TARGET").unwrap();
-    let exe_path = workspace_root
-        .join("target")
-        .join(&target_triple)
-        .join("debug")
-        .join("yb");
-    assert!(exe_path.is_file());
-    Ok(exe_path)
-}
 
 fn create_yb_conf_repo() -> Result<GitRepo> {
     let dir = DebugTempDir::new().unwrap();
