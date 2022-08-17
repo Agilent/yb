@@ -44,6 +44,17 @@ impl SubcommandRunner for UpgradeCommand {
                 // An activated Yocto environment
                 let target = context2.sources_dir.parent().unwrap().to_owned();
 
+                // Sanity check: make sure cwd is under `target`
+                if !config.cwd.ancestors().any(|ancestor| ancestor == target) {
+                    return Err(eyre::eyre!(
+                    "current working directory must be within the activated Yocto environment to proceed",
+                )
+                        .suggestion(format!("`cd` to the Yocto environment ({}) and then try again", target.display()))
+                        .suggestion("or, activate a different Yocto environment")
+                        .suppress_backtrace(true)
+                    );
+                }
+
                 let arena = toolshed::Arena::new();
                 let new_context = ToolContext::Yb(YbEnv::initialize(target, &context2, &arena)?);
                 match &new_context {
