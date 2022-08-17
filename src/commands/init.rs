@@ -1,3 +1,4 @@
+use color_eyre::Help;
 use indicatif::MultiProgress;
 use std::fs;
 
@@ -42,7 +43,7 @@ impl SubcommandRunner for InitCommand {
         let arena = toolshed::Arena::new();
         let context = determine_tool_context(config, &arena)?;
 
-        let mut new_yocto_dir = None;
+        let new_yocto_dir;
         match context {
             Some(ToolContext::Yb(yb_env)) => {
                 return Err(eyre::eyre!(
@@ -51,20 +52,19 @@ impl SubcommandRunner for InitCommand {
                 ));
             }
             Some(ToolContext::YoctoEnv(context2)) => {
-                // An activated Yocto environment
-                let target = context2.sources_dir.parent().unwrap().to_owned();
-
-                let arena = toolshed::Arena::new();
-                let new_context = ToolContext::Yb(YbEnv::initialize(target, &context2, &arena)?);
-                match &new_context {
-                    ToolContext::Yb(yb_env) => println!("initialized yb env at {:?}", yb_env),
-                    _ => panic!(""),
-                };
+                return Err(eyre::eyre!(
+                    "cannot init yb env within an activated Yocto environment",
+                ).suggestion("use `yb upgrade` if you want to create a yb env within your activated Yocto env")
+                    .suggestion("or, if you meant to use `yb init`, launch a new shell")
+                    .note(format!("Yocto environment in question is rooted at: {}", context2.sources_dir.parent().unwrap().to_owned().display()))
+                    .warning("since 0.0.12, the behavior of yb init has changed. See https://github.com/Agilent/yb/issues/3")
+                    .suppress_backtrace(true)
+                );
             }
             None => {
                 // No environment, create a skeleton one
                 let yocto_dir = config.cwd().join("yocto");
-                new_yocto_dir = Some(yocto_dir.clone());
+                new_yocto_dir = yocto_dir.clone();
                 fs::create_dir(&yocto_dir)?;
 
                 let sources_dir = yocto_dir.join("sources");
@@ -88,17 +88,16 @@ impl SubcommandRunner for InitCommand {
         };
 
         if let Some(default_stream_uri) = &self.default_stream {
-            let new_config = new_yocto_dir.map(|d| config.clone_with_cwd(d));
-            let config = new_config.as_ref().unwrap_or(config);
+            let config = config.clone_with_cwd(new_yocto_dir);
 
-            let mut add_stream_opts = AddStreamOptions::new(config);
+            let mut add_stream_opts = AddStreamOptions::new(&config);
             add_stream_opts.uri(default_stream_uri.clone());
             op_add_stream(add_stream_opts)?;
 
             if let Some(default_spec_name) = &self.default_spec {
                 // TODO deduplicate code
                 let arena = toolshed::Arena::new();
-                let mut yb_env = require_yb_env(config, &arena)?;
+                let mut yb_env = require_yb_env(&config, &arena)?;
 
                 let spec = yb_env.find_spec(&default_spec_name)?.cloned();
                 if let Some(spec) = spec {

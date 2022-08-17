@@ -53,10 +53,9 @@ impl YbConf {
     }
 }
 
-
 #[cfg(test)]
 mod test {
-    use crate::yb_conf::{YB_CONF_FORMAT_VERSION, YbConf};
+    use crate::yb_conf::{YbConf, YB_CONF_FORMAT_VERSION};
 
     #[test]
     fn fake_version_1_handling() {
@@ -90,4 +89,3 @@ poky_dir_relative: "../sources/poky"
         assert_eq!(YB_CONF_FORMAT_VERSION, 2, "need to update migration code!");
     }
 }
-

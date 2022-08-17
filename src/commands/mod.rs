@@ -11,6 +11,7 @@ use crate::commands::stream::{
     StreamAddCommand, StreamListCommand, StreamSubcommands, StreamUpdateCommand,
 };
 use crate::commands::sync::SyncCommand;
+use crate::commands::upgrade::UpgradeCommand;
 use crate::errors::YbResult;
 use crate::Config;
 
@@ -22,6 +23,7 @@ mod self_update;
 pub mod status;
 mod stream;
 mod sync;
+mod upgrade;
 
 #[enum_dispatch]
 pub trait SubcommandRunner {
@@ -40,4 +42,5 @@ pub enum Subcommands {
     Activate(ActivateCommand),
     Sync(SyncCommand),
     List(ListCommand),
+    Upgrade(UpgradeCommand),
 }
