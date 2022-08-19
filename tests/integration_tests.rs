@@ -63,6 +63,78 @@ fn yb_init() -> Result<()> {
     Ok(())
 }
 
+#[test]
+fn yb_upgrade() -> Result<()> {
+    // Test that `yb upgrade` can upgrade an existing Yocto env
+    let t = DebugTempDir::new()?;
+    let path = t.path();
+
+    let yocto_dir = path.join("yocto");
+    fs::create_dir(&yocto_dir)?;
+
+    let sources_dir = yocto_dir.join("sources");
+    fs::create_dir(&sources_dir)?;
+
+    Command::new("git")
+        .current_dir(&sources_dir)
+        .arg("clone")
+        .arg("https://github.com/yoctoproject/poky.git")
+        .unwrap();
+    Command::new("git")
+        .current_dir(&sources_dir)
+        .arg("clone")
+        .arg("https://github.com/openembedded/meta-openembedded.git")
+        .unwrap();
+
+    let build_dir = yocto_dir.join("build");
+    let conf_dir = build_dir.join("conf");
+    let bblayers = conf_dir.join("bblayers.conf");
+    fs::create_dir_all(conf_dir).unwrap();
+    let mut contents =
+        r##"# POKY_BBLAYERS_CONF_VERSION is increased each time build/conf/bblayers.conf
+# changes incompatibly
+POKY_BBLAYERS_CONF_VERSION = "2"
+
+BBPATH = "${TOPDIR}"
+BBFILES ??= ""
+BBLAYERS ?= " "##
+            .to_string();
+
+    contents += sources_dir.join("poky").to_str().unwrap();
+    contents.push(' ');
+    contents += sources_dir.join("meta-openembedded").to_str().unwrap();
+    contents.push('"');
+
+    fs::write(bblayers, contents).unwrap();
+
+    Command::new("sh")
+        .current_dir(&yocto_dir)
+        .arg("-c")
+        .arg(". sources/poky/oe-init-build-env")
+        .unwrap();
+
+    let path_var = std::env::var("PATH").unwrap();
+    let path_var = format!(
+        "{}:{}:{}",
+        sources_dir.join("poky").join("scripts").to_str().unwrap(),
+        sources_dir
+            .join("poky")
+            .join("bitbake")
+            .join("bin")
+            .to_str()
+            .unwrap(),
+        path_var
+    );
+
+    yb_cmd(yocto_dir)
+        .arg("upgrade")
+        .env("PATH", path_var)
+        .env("BBPATH", build_dir.to_str().unwrap())
+        .assert()
+        .success();
+
+    Ok(())
+}
 
 fn create_yb_conf_repo() -> Result<GitRepo> {
     let dir = DebugTempDir::new().unwrap();
