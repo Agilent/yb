@@ -1,6 +1,9 @@
 // Some functions below (where noted) are from git2-rs which is dual-licensed MIT and Apache 2.0.
 // Those portions are Copyright (c) 2014 Alex Crichton
 
+#[cfg(test)]
+pub mod concurrent_git_cache;
+
 use std::collections::HashMap;
 use std::path::PathBuf;
 

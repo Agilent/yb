@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::hash::Hash;
 
+pub mod debug_temp_dir;
 pub mod git;
 pub mod indicatif;
 pub mod paths;

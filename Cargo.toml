@@ -32,6 +32,7 @@ serde = { version = "1.0.137", features = ["derive"] }
 serde_json = "1.0.81"
 serde_yaml = "0.9.2"
 tempfile = "3.3.0"
+tokio = { version = "1", features = ["full"] }
 toolshed = "0.8.1"
 tracing = "0.1"
 tracing-error = { version = "0.2" }
