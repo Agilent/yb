@@ -3,6 +3,7 @@ use std::path::Path;
 
 use assert_cmd::Command;
 use color_eyre::eyre::Result;
+use yb::util::git::concurrent_git_cache::GIT_CACHE;
 
 use crate::common::DebugTempDir;
 
@@ -63,8 +64,8 @@ fn yb_init() -> Result<()> {
     Ok(())
 }
 
-#[test]
-fn yb_upgrade() -> Result<()> {
+#[tokio::test]
+async fn yb_upgrade() -> Result<()> {
     // Test that `yb upgrade` can upgrade an existing Yocto env
     let t = DebugTempDir::new()?;
     let path = t.path();
@@ -75,16 +76,12 @@ fn yb_upgrade() -> Result<()> {
     let sources_dir = yocto_dir.join("sources");
     fs::create_dir(&sources_dir)?;
 
-    Command::new("git")
-        .current_dir(&sources_dir)
-        .arg("clone")
-        .arg("https://github.com/yoctoproject/poky.git")
-        .unwrap();
-    Command::new("git")
-        .current_dir(&sources_dir)
-        .arg("clone")
-        .arg("https://github.com/openembedded/meta-openembedded.git")
-        .unwrap();
+    let poky = GIT_CACHE.clone_in(&sources_dir, "https://github.com/yoctoproject/poky.git");
+    let oe = GIT_CACHE.clone_in(
+        &sources_dir,
+        "https://github.com/openembedded/meta-openembedded.git",
+    );
+    tokio::join!(poky, oe);
 
     let build_dir = yocto_dir.join("build");
     let conf_dir = build_dir.join("conf");

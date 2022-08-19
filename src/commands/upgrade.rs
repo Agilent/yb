@@ -1,6 +1,5 @@
 use color_eyre::Help;
 use indicatif::MultiProgress;
-use std::path::PathBuf;
 
 use crate::commands::SubcommandRunner;
 use crate::core::tool_context::{determine_tool_context, require_yb_env, ToolContext};

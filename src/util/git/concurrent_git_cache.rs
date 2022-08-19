@@ -1,93 +1,172 @@
 use crate::util::debug_temp_dir::DebugTempDir;
-use assert_cmd::Command;
-use std::collections::hash_map::Entry::{Occupied, Vacant};
+use async_process::Command;
+use futures::future::Shared;
+use futures::prelude::*;
+use once_cell::sync::Lazy;
+use sha2::{Digest, Sha256};
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-use std::path::PathBuf;
-use std::sync::{Arc, Condvar, Mutex};
+use std::future::Future;
+use std::path::{Path, PathBuf};
+use std::pin::Pin;
+use std::process;
+use std::process::Output;
+use tokio::sync::Mutex;
 
+#[derive(Clone)]
 enum CacheEntry {
-    Cloning(Arc<(Mutex<()>, Condvar)>),
-    Cloned(PathBuf),
+    Available(PathBuf),
+    Cloning(Shared<Pin<Box<dyn Future<Output = PathBuf> + Send>>>),
 }
 
 pub struct ConcurrentGitCache {
+    cache: Mutex<HashMap<String, CacheEntry>>,
     root: DebugTempDir,
-    cloning: Mutex<HashMap<String, CacheEntry>>,
+}
+
+fn dest_dir_for_remote<S>(remote: S) -> String
+where
+    S: AsRef<str>,
+{
+    let remote = remote.as_ref();
+    let mut hasher = Sha256::new();
+    hasher.update(remote);
+    format!("{:x}", hasher.finalize())
+}
+
+async fn clone_repo(root: PathBuf, remote: String, dest_dir_name: String) -> PathBuf {
+    Command::new("git")
+        .current_dir(&root)
+        .arg("clone")
+        .arg(&remote)
+        .arg(&dest_dir_name)
+        .output()
+        .await
+        .unwrap();
+
+    root.join(&dest_dir_name)
 }
 
 impl ConcurrentGitCache {
     pub fn new() -> Self {
         Self {
+            cache: Mutex::new(HashMap::new()),
             root: DebugTempDir::new().unwrap(),
-            cloning: Mutex::new(HashMap::new()),
         }
     }
 
-    pub fn lookup_or_clone<S>(&self, remote: S)
+    pub async fn clone_in<C, R>(&self, cwd: C, remote: R)
     where
-        S: AsRef<str>,
+        C: AsRef<Path>,
+        R: AsRef<str>,
     {
+        self.git_clone_command(remote)
+            .await
+            .current_dir(cwd)
+            .output()
+            .await
+            .unwrap();
+    }
+
+    pub async fn git_clone_command<R>(&self, remote: R) -> Command
+    where
+        R: AsRef<str>,
+    {
+        let cache = self.cache.lock().await;
         let remote = remote.as_ref();
-        let mut state = self.cloning.lock().unwrap();
 
-        match state.entry(remote.to_string()) {
-            Occupied(a) => {
-                if let CacheEntry::Cloning(arc) = a.get() {
-                    let arc = arc.clone();
-                    drop(state);
+        let mut command = Command::new("git");
+        command.arg("clone").arg(remote);
 
-                    let lock = arc.0.lock().unwrap();
-                    let _ = arc.1.wait(lock).unwrap();
+        if let Some(entry) = cache.get(remote) {
+            let path = match entry.clone() {
+                // Repo is already on-disk
+                CacheEntry::Available(p) => p,
+                CacheEntry::Cloning(future) => {
+                    drop(cache);
+                    // Clone is in-flight
+                    future.await
+                }
+            };
 
-                    eprintln!("waited!");
-                    let state = self.cloning.lock().unwrap();
-                    let p = state.get(remote).unwrap();
-                    if let CacheEntry::Cloned(p) = p {
-                        panic!("{:?}", p);
+            command
+                .arg("--reference")
+                .arg(path.to_str().unwrap())
+                .arg("--dissociate");
+        }
+
+        command
+    }
+
+    // Clone the given remote and add it to the cache, if not already present.
+    // Returns path to the cached git repo.
+    pub async fn get_repo_for_remote<R>(&self, remote: R) -> PathBuf
+    where
+        R: Into<String>,
+    {
+        let remote = remote.into();
+        let dest_dir_name = dest_dir_for_remote(&remote);
+
+        let root = self.root.path().to_path_buf();
+
+        let mut cache = self.cache.lock().await;
+
+        match cache.entry(remote.clone()) {
+            Entry::Occupied(entry) => {
+                return match entry.get().clone() {
+                    // Repo is already on-disk
+                    CacheEntry::Available(p) => p,
+                    CacheEntry::Cloning(future) => {
+                        drop(cache);
+                        // Clone is in-flight
+                        future.await
                     }
-                }
+                };
             }
-            Vacant(a) => {
-                let mutex = Mutex::new(());
-                let cv = Condvar::new();
-                let arc = Arc::new((mutex, cv));
-                let entry = CacheEntry::Cloning(arc.clone());
-                a.insert(entry);
+            Entry::Vacant(entry) => {
+                let request = clone_repo(root, remote.clone(), dest_dir_name)
+                    .boxed()
+                    .shared();
 
-                drop(state);
+                entry.insert(CacheEntry::Cloning(request.clone()));
 
-                Command::new("git")
-                    .current_dir(&self.root)
-                    .arg("clone")
-                    .arg(remote)
-                    .unwrap();
+                drop(cache);
 
-                let mut state = self.cloning.lock().unwrap();
+                let ret = request.await;
 
-                arc.1.notify_all();
+                // Re-acquire lock on HashMap so we can change the entry
+                let mut requests = self.cache.lock().await;
+                requests.insert(remote.clone(), CacheEntry::Available(ret.clone()));
 
-                if let Occupied(mut a) = state.entry(remote.to_string()) {
-                    a.insert(CacheEntry::Cloned(PathBuf::new()));
-                }
+                ret
             }
         }
     }
 }
 
+pub static GIT_CACHE: Lazy<ConcurrentGitCache> = Lazy::new(ConcurrentGitCache::new);
+
 #[cfg(test)]
 mod test {
-    use crate::util::git::concurrent_git_cache::ConcurrentGitCache;
-    use once_cell::sync::{Lazy};
-
-    static INSTANCE: Lazy<ConcurrentGitCache> = Lazy::new(|| ConcurrentGitCache::new());
+    use crate::util::git::concurrent_git_cache::GIT_CACHE;
+    use tokio::join;
 
     #[tokio::test]
     async fn clone1() {
-        INSTANCE.lookup_or_clone("https://github.com/yoctoproject/poky.git");
+        let poky = GIT_CACHE.get_repo_for_remote("https://github.com/yoctoproject/poky.git");
+
+        let bitbake =
+            GIT_CACHE.get_repo_for_remote("https://github.com/openembedded/meta-openembedded.git");
+
+        join!(poky, bitbake);
     }
 
     #[tokio::test]
     async fn clone2() {
-        INSTANCE.lookup_or_clone("https://github.com/yoctoproject/poky.git");
+        let bitbake =
+            GIT_CACHE.get_repo_for_remote("https://github.com/openembedded/meta-openembedded.git");
+        let poky = GIT_CACHE.get_repo_for_remote("https://github.com/yoctoproject/poky.git");
+
+        join!(poky, bitbake);
     }
 }
