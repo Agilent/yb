@@ -11,7 +11,7 @@ repos:
       meta-poky:
 
   meta-openembedded:
-    url: "git://git.openembedded.org/meta-openembedded"
+    url: "https://github.com/openembedded/meta-openembedded.git"
     refspec: "zeus"
     layers:
       meta-networking:
