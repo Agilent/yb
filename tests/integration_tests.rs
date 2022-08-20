@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use assert_cmd::Command;
 use color_eyre::eyre::Result;
@@ -64,9 +64,7 @@ fn yb_init() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-async fn yb_upgrade() -> Result<()> {
-    // Test that `yb upgrade` can upgrade an existing Yocto env
+async fn setup_yocto_env() -> Result<YoctoEnv> {
     let t = DebugTempDir::new()?;
     let path = t.path();
 
@@ -123,12 +121,51 @@ BBLAYERS ?= " "##
         path_var
     );
 
-    yb_cmd(yocto_dir)
+    Ok(YoctoEnv {
+        root: t,
+        sources_dir,
+        yocto_dir,
+        build_dir,
+        path_var,
+    })
+}
+
+struct YoctoEnv {
+    root: DebugTempDir,
+    sources_dir: PathBuf,
+    yocto_dir: PathBuf,
+    build_dir: PathBuf,
+    path_var: String,
+}
+
+#[tokio::test]
+async fn yb_upgrade() -> Result<()> {
+    // Test that `yb upgrade` can upgrade an existing Yocto env
+    let env = setup_yocto_env().await?;
+
+    yb_cmd(env.yocto_dir)
         .arg("upgrade")
-        .env("PATH", path_var)
-        .env("BBPATH", build_dir.to_str().unwrap())
+        .env("PATH", env.path_var)
+        .env("BBPATH", env.build_dir.to_str().unwrap())
         .assert()
         .success();
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn yb_init_fails_on_yocto_env() -> Result<()> {
+    // Test that `yb upgrade` can upgrade an existing Yocto env
+    let env = setup_yocto_env().await?;
+
+    let output = yb_cmd(env.yocto_dir)
+        .arg("init")
+        .env("PATH", env.path_var)
+        .env("BBPATH", env.build_dir.to_str().unwrap())
+        .output().unwrap();
+
+    let stderr = std::str::from_utf8(&output.stderr)?;
+    assert!(stderr.contains("cannot init yb env within an activated Yocto environment"));
 
     Ok(())
 }
