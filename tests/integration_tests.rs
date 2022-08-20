@@ -155,7 +155,7 @@ async fn yb_upgrade() -> Result<()> {
 
 #[tokio::test]
 async fn yb_init_fails_on_yocto_env() -> Result<()> {
-    // Test that `yb upgrade` can upgrade an existing Yocto env
+    // Test that `yb init` fails inside a Yocto env
     let env = setup_yocto_env().await?;
 
     let output = yb_cmd(env.yocto_dir)
