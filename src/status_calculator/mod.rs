@@ -134,21 +134,21 @@ where
     F: FnMut(StatusCalculatorEvent),
 {
     // First things first, do a 'git fetch'
-    {
-        // TODO: fetch all remotes?
+    // TODO: fetch all remotes?
+    if !options.no_fetch {
         let mut repo_remote = get_remote_for_current_branch(&repo)?;
         // If the current branch is tracking an upstream branch, fetch it to check for updates
         if let Some(remote) = repo_remote.as_mut() {
-            if !options.no_fetch {
-                c(StatusCalculatorEvent::StartFetch);
-                let mut fetch_options = FetchOptions::new();
-                fetch_options.remote_callbacks(ssh_agent_remote_callbacks());
-                // TODO: this is really slow
-                //fetch_options.download_tags(AutotagOption::All);
-                remote.fetch(&[] as &[&str], Some(&mut fetch_options), None)?;
-                c(StatusCalculatorEvent::FinishFetch);
-            }
+            c(StatusCalculatorEvent::StartFetch);
+            let mut fetch_options = FetchOptions::new();
+            fetch_options.remote_callbacks(ssh_agent_remote_callbacks());
+            // TODO: this is really slow
+            //fetch_options.download_tags(AutotagOption::All);
+            remote.fetch(&[] as &[&str], Some(&mut fetch_options), None)?;
+            c(StatusCalculatorEvent::FinishFetch);
         }
+
+        drop(repo_remote);
     }
 
     // See if we can map the repo to a spec repo
