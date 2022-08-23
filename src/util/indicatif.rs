@@ -18,13 +18,13 @@ impl IndicatifHelpers for ProgressBar {
         self
     }
 
-    fn message_unstyled(&self) -> String {
-        strip_ansi_codes(&self.message()).to_string()
-    }
-
     fn restyle_message(&self, style: Style) {
         let msg = self.message_unstyled();
         self.set_message(style.apply_to(msg).to_string());
+    }
+
+    fn message_unstyled(&self) -> String {
+        strip_ansi_codes(&self.message()).to_string()
     }
 }
 
