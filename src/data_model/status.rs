@@ -324,10 +324,10 @@ pub fn find_corresponding_spec_repo_for_repo(
         .unwrap();
 
     let remote_names_with_urls = enumerate_repo_remotes(repo)?;
+
     // Iterate through each spec repo
     for (spec_repo_subdir_name, spec_repo) in spec_repos {
         // Iterate through each of the on-disk repo's remotes
-        // TODO dedupe with below
         for (remote_name, remote_url) in &remote_names_with_urls {
             let tracking_branch = RemoteTrackingBranch {
                 branch_name: spec_repo.refspec.clone(),
@@ -350,41 +350,35 @@ pub fn find_corresponding_spec_repo_for_repo(
                     },
                 )));
             }
-        }
 
-        // Next consider extra remotes
-        // TODO dedupe with above
-        for (remote_name, remote_url) in &remote_names_with_urls {
-            let tracking_branch = RemoteTrackingBranch {
-                branch_name: spec_repo.refspec.clone(),
-                remote_name: remote_name.clone(),
-            };
-
-            if let Some(extra_remotes) = &spec_repo.extra_remotes {
+            // Consider extra remotes
+            if spec_repo
+                .extra_remotes
+                .iter()
+                .any(|(_, extra_remote)| *remote_url == extra_remote.url)
+            {
                 // The remote URL matches one of the extra remotes in the spec
-                if extra_remotes
-                    .iter()
-                    .any(|(_, extra_remote)| *remote_url == extra_remote.url)
-                {
-                    // TODO revisit assertion
-                    assert_eq!(
-                        repo_subdir_name, spec_repo_subdir_name,
-                        "TODO revisit assertion"
-                    );
-                    return Ok(Some(CorrespondingSpecRepoStatus::RemoteMatch(
-                        RemoteMatchStatus {
-                            spec_repo: spec_repo.clone(),
-                            spec_repo_name: spec_repo_subdir_name.clone(),
-                            is_extra_remote: true,
-                            local_branches_tracking_remote:
-                                find_local_branches_tracking_remote_branch(repo, &tracking_branch)?,
-                            remote_tracking_branch: tracking_branch,
-                            matching_remote_name: remote_name.clone(),
-                        },
-                    )));
-                }
+                // TODO revisit assertion
+                assert_eq!(
+                    repo_subdir_name, spec_repo_subdir_name,
+                    "TODO revisit assertion"
+                );
+                return Ok(Some(CorrespondingSpecRepoStatus::RemoteMatch(
+                    RemoteMatchStatus {
+                        spec_repo: spec_repo.clone(),
+                        spec_repo_name: spec_repo_subdir_name.clone(),
+                        is_extra_remote: true,
+                        local_branches_tracking_remote: find_local_branches_tracking_remote_branch(
+                            repo,
+                            &tracking_branch,
+                        )?,
+                        remote_tracking_branch: tracking_branch,
+                        matching_remote_name: remote_name.clone(),
+                    },
+                )));
             }
         }
+    }
 
         // Fallback - try to establish a possible match by looking for a spec repo whose name is
         // the same as the directory of the on-disk repo.
