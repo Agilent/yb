@@ -122,8 +122,15 @@ impl SubcommandRunner for SyncCommand {
 
                 match &status_data.corresponding_spec_repo {
                     Some(corresponding_spec_repo_status) => match &corresponding_spec_repo_status {
-                        CorrespondingSpecRepoStatus::PossibleMatch { .. } => {
-                            println!("{}", Style::new().red().on_white().apply_to(format!("{} has the same name of a spec repo, but isn't tracking any expected remote; refusing to continue", status_data.path.display())));
+                        CorrespondingSpecRepoStatus::RelatedRepo { spec_repo, .. } => {
+                            println!(
+                                "{}",
+                                Style::new().red().on_white().apply_to(format!(
+                                    "{} shares commits with spec repo {}",
+                                    status_data.path.display(),
+                                    spec_repo.url
+                                ))
+                            );
                             panic!();
                         }
                         CorrespondingSpecRepoStatus::RemoteMatch(remote_match) => {

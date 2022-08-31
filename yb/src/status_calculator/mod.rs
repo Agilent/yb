@@ -153,7 +153,7 @@ where
     }
 
     // See if we can map the repo to a spec repo
-    let spec_repo_status = find_corresponding_spec_repo_for_repo(&repo, active_spec_repos)?;
+    let spec_repo_status = find_corresponding_spec_repo_for_repo(&repo, active_spec_repos, c)?;
 
     let current_branch_status = {
         // TODO: gracefully handle detached HEAD and repos without a tracked branch
@@ -319,7 +319,7 @@ pub enum StatusCalculatorEvent<'a> {
     },
     StartFetch,
     StartSubdirOperation {
-        operation_name: &'static str,
+        operation_name: String,
     },
     FinishFetch,
     SubdirStatusComputed(&'a ComputedStatusEntry),

@@ -1,7 +1,8 @@
 use core::fmt;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 
 use crate::data_model::git::{
     BranchStatus, LocalTrackingBranch, LocalTrackingBranchWithUpstreamComparison,
@@ -11,10 +12,12 @@ use crate::data_model::Layer;
 use git2::{Branch, BranchType, Oid, Repository};
 use itertools::Itertools;
 use serde::Serialize;
+use tempfile::TempDir;
 
 use crate::errors::YbResult;
 use crate::spec::{ActiveSpec, SpecRepo};
-use crate::status_calculator::compare_branch_to_remote_tracking_branch;
+use crate::status_calculator::{compare_branch_to_remote_tracking_branch, StatusCalculatorEvent};
+use crate::util::debug_temp_dir::DebugTempDir;
 use crate::util::git::get_remote_tracking_branch;
 
 /// The status of the Yocto environment
@@ -259,7 +262,7 @@ impl RemoteMatchStatus {
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub enum CorrespondingSpecRepoStatus {
     RemoteMatch(RemoteMatchStatus),
-    PossibleMatch {
+    RelatedRepo {
         spec_repo: SpecRepo,
         spec_repo_name: String,
     },
@@ -271,7 +274,7 @@ impl CorrespondingSpecRepoStatus {
             CorrespondingSpecRepoStatus::RemoteMatch(RemoteMatchStatus {
                 spec_repo_name, ..
             }) => spec_repo_name.clone(),
-            CorrespondingSpecRepoStatus::PossibleMatch { spec_repo_name, .. } => {
+            CorrespondingSpecRepoStatus::RelatedRepo { spec_repo_name, .. } => {
                 spec_repo_name.clone()
             }
         }
@@ -282,7 +285,7 @@ impl CorrespondingSpecRepoStatus {
             CorrespondingSpecRepoStatus::RemoteMatch(remote_match_status) => {
                 &remote_match_status.spec_repo
             }
-            CorrespondingSpecRepoStatus::PossibleMatch { spec_repo, .. } => spec_repo,
+            CorrespondingSpecRepoStatus::RelatedRepo { spec_repo, .. } => spec_repo,
         }
     }
 }
@@ -309,11 +312,52 @@ pub fn enumerate_repo_remotes(repo: &Repository) -> YbResult<HashMap<String, Str
         .collect())
 }
 
+pub fn enumerate_revisions<P: AsRef<Path>>(repo_path: P) -> YbResult<HashSet<String>> {
+    // git rev-list --all --full-history
+    let revs = Command::new("git")
+        .arg("rev-list")
+        .arg("--all")
+        .arg("--full-history")
+        .current_dir(repo_path)
+        .output()?
+        .stdout;
+
+    Ok(std::str::from_utf8(revs.as_slice())
+        .unwrap()
+        .lines()
+        .map(String::from)
+        .collect())
+}
+
+pub fn clone_and_enumerate_revisions(spec_repo: &SpecRepo) -> YbResult<HashSet<String>> {
+    let tmp = TempDir::new().unwrap();
+
+    Command::new("git")
+        .arg("clone")
+        .arg(&spec_repo.url)
+        .arg("-b")
+        .arg(&spec_repo.refspec)
+        .arg(tmp.path())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .output()?;
+
+    enumerate_revisions(tmp.path())
+}
+
+/// For the on-disk repository `repo`, try to find corresponding spec repo using these methods:
+///     1. Check if the repos share a remote (either primary or extra)
+///     2. See if the on-disk repo and the spec repo remote has any common commits (by cloning the
+///         latter to a temporary directory)
 /// TODO document does not validate refspec
-pub fn find_corresponding_spec_repo_for_repo(
+pub fn find_corresponding_spec_repo_for_repo<F>(
     repo: &Repository,
     spec_repos: &HashMap<String, SpecRepo>,
-) -> YbResult<Option<CorrespondingSpecRepoStatus>> {
+    c: &mut F,
+) -> YbResult<Option<CorrespondingSpecRepoStatus>>
+where
+    F: FnMut(StatusCalculatorEvent),
+{
     let repo_subdir_name = repo
         .path()
         .parent()
@@ -385,11 +429,24 @@ pub fn find_corresponding_spec_repo_for_repo(
                 )));
             }
         }
-
-        // Fallback - try to establish a possible match by looking for a spec repo whose name is
-        // the same as the directory of the on-disk repo.
+    }
+    
+    // Make another pass through spec repos to look for related repos
+    for (spec_repo_subdir_name, spec_repo) in spec_repos {
         if repo_subdir_name == spec_repo_subdir_name {
-            return Ok(Some(CorrespondingSpecRepoStatus::PossibleMatch {
+            let op = format!("checking possible upstream {}", spec_repo.url);
+            c(StatusCalculatorEvent::StartSubdirOperation { operation_name: op });
+            let spec_repo_revs = clone_and_enumerate_revisions(spec_repo)?;
+            let on_disk_revs = enumerate_revisions(repo.path())?;
+            c(StatusCalculatorEvent::StartSubdirOperation {
+                operation_name: "".into(),
+            });
+
+            if spec_repo_revs.is_disjoint(&on_disk_revs) {
+                continue;
+            }
+
+            return Ok(Some(CorrespondingSpecRepoStatus::RelatedRepo {
                 spec_repo: spec_repo.clone(),
                 spec_repo_name: spec_repo_subdir_name.clone(),
             }));
