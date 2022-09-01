@@ -3,6 +3,7 @@
 #![feature(assert_matches)]
 #![feature(try_find)]
 #![feature(box_syntax)]
+#![feature(async_closure)]
 
 pub use config::Config;
 

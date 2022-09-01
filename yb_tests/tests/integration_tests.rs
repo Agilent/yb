@@ -162,7 +162,8 @@ async fn yb_init_fails_on_yocto_env() -> Result<()> {
         .arg("init")
         .env("PATH", env.path_var)
         .env("BBPATH", env.build_dir.to_str().unwrap())
-        .output().unwrap();
+        .output()
+        .unwrap();
 
     let stderr = std::str::from_utf8(&output.stderr)?;
     assert!(stderr.contains("cannot init yb env within an activated Yocto environment"));

@@ -81,6 +81,8 @@ pub enum SpecRepoLayer {
 }
 
 impl SpecRepo {
+    pub fn all_remotes(&self) {}
+
     pub fn layers(&self) -> Option<HashSet<SpecRepoLayer>> {
         self.layers.clone().map(|layer_names| {
             layer_names

@@ -378,7 +378,6 @@ pub fn find_corresponding_spec_repo_for_repo(
                 )));
             }
         }
-    }
 
         // Fallback - try to establish a possible match by looking for a spec repo whose name is
         // the same as the directory of the on-disk repo.

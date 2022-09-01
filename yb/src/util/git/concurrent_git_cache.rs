@@ -1,3 +1,4 @@
+use std::cell::Cell;
 use crate::util::debug_temp_dir::DebugTempDir;
 use async_process::Command;
 use futures::future::Shared;
@@ -7,8 +8,10 @@ use sha2::{Digest, Sha256};
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::future::Future;
+use std::io;
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
+use tokio::net::TcpListener;
 use tokio::sync::Mutex;
 
 #[derive(Clone)]
