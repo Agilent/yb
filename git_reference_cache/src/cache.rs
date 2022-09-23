@@ -1,28 +1,20 @@
-use std::cell::Cell;
-use crate::util::debug_temp_dir::DebugTempDir;
-use async_process::Command;
 use futures::future::Shared;
 use futures::prelude::*;
-use once_cell::sync::Lazy;
 use sha2::{Digest, Sha256};
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::future::Future;
-use std::io;
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
-use tokio::net::TcpListener;
+use tempfile::TempDir;
+use tokio::process::Command;
 use tokio::sync::Mutex;
+use crate::error::{Error, Result};
 
-#[derive(Clone)]
-enum CacheEntry {
-    Available(PathBuf),
-    Cloning(Shared<Pin<Box<dyn Future<Output = PathBuf> + Send>>>),
-}
-
+#[derive(Debug)]
 pub struct ConcurrentGitCache {
     cache: Mutex<HashMap<String, CacheEntry>>,
-    root: DebugTempDir,
+    root: TempDir,
 }
 
 fn dest_dir_for_remote<S>(remote: S) -> String
@@ -35,24 +27,31 @@ where
     format!("{:x}", hasher.finalize())
 }
 
-async fn clone_repo(root: PathBuf, remote: String, dest_dir_name: String) -> PathBuf {
-    Command::new("git")
+async fn clone_repo(
+    root: PathBuf,
+    remote: String,
+    dest_dir_name: String,
+) -> Result<PathBuf> {
+    let status = Command::new("git")
         .current_dir(&root)
+        .env("GIT_TERMINAL_PROMPT", "0")
         .arg("clone")
         .arg(&remote)
         .arg(&dest_dir_name)
-        .output()
-        .await
-        .unwrap();
+        .status()
+        .await?;
 
-    root.join(&dest_dir_name)
+    match status.success() {
+        true => Ok(root.join(&dest_dir_name)),
+        false => Err(Error::CloneFailed(status)),
+    }
 }
 
 impl ConcurrentGitCache {
     pub fn new() -> Self {
         Self {
             cache: Mutex::new(HashMap::new()),
-            root: DebugTempDir::new().unwrap(),
+            root: TempDir::new().unwrap(),
         }
     }
 
@@ -88,7 +87,8 @@ impl ConcurrentGitCache {
                     // Clone is in-flight
                     future.await
                 }
-            };
+            }
+            .expect("TODO");
 
             command
                 .arg("--reference")
@@ -101,7 +101,7 @@ impl ConcurrentGitCache {
 
     // Clone the given remote and add it to the cache, if not already present.
     // Returns path to the cached git repo.
-    pub async fn get_repo_for_remote<R>(&self, remote: R) -> PathBuf
+    pub async fn get_repo_for_remote<R>(&self, remote: R) -> Result<PathBuf>
     where
         R: Into<String>,
     {
@@ -145,29 +145,35 @@ impl ConcurrentGitCache {
     }
 }
 
-pub static GIT_CACHE: Lazy<ConcurrentGitCache> = Lazy::new(ConcurrentGitCache::new);
-
-#[cfg(test)]
-mod test {
-    use crate::util::git::concurrent_git_cache::GIT_CACHE;
-    use tokio::join;
-
-    #[tokio::test]
-    async fn clone1() {
-        let poky = GIT_CACHE.get_repo_for_remote("https://github.com/yoctoproject/poky.git");
-
-        let bitbake =
-            GIT_CACHE.get_repo_for_remote("https://github.com/openembedded/meta-openembedded.git");
-
-        join!(poky, bitbake);
-    }
-
-    #[tokio::test]
-    async fn clone2() {
-        let bitbake =
-            GIT_CACHE.get_repo_for_remote("https://github.com/openembedded/meta-openembedded.git");
-        let poky = GIT_CACHE.get_repo_for_remote("https://github.com/yoctoproject/poky.git");
-
-        join!(poky, bitbake);
-    }
+#[derive(Debug, Clone)]
+enum CacheEntry {
+    Available(Result<PathBuf>),
+    Cloning(Shared<Pin<Box<dyn Future<Output = Result<PathBuf>> + Send>>>),
 }
+
+// pub static GIT_CACHE: Lazy<ConcurrentGitCache> = Lazy::new(ConcurrentGitCache::new);
+//
+// #[cfg(test)]
+// mod test {
+//     use crate::util::git::concurrent_git_cache::GIT_CACHE;
+//     use tokio::join;
+//
+//     #[tokio::test]
+//     async fn clone1() {
+//         let poky = GIT_CACHE.get_repo_for_remote("https://github.com/yoctoproject/poky.git");
+//
+//         let bitbake =
+//             GIT_CACHE.get_repo_for_remote("https://github.com/openembedded/meta-openembedded.git");
+//
+//         join!(poky, bitbake);
+//     }
+//
+//     #[tokio::test]
+//     async fn clone2() {
+//         let bitbake =
+//             GIT_CACHE.get_repo_for_remote("https://github.com/openembedded/meta-openembedded.git");
+//         let poky = GIT_CACHE.get_repo_for_remote("https://github.com/yoctoproject/poky.git");
+//
+//         join!(poky, bitbake);
+//     }
+// }

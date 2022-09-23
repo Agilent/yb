@@ -6,3 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1"
+futures = "0.3.24"
+sha2 = "0.10.3"
+tempfile = "3"
+thiserror = "1"
+tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7.3", features = ["codec"] }
+tracing = "0.1.36"

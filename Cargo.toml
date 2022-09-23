@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "git_reference_cache",
     "yb",
     "yb_tests",
 ]

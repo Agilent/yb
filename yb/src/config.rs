@@ -16,7 +16,7 @@ impl Config {
         Config {
             cwd,
             porcelain: options.porcelain,
-            git_cache_socket: options.git_cache_socket.clone()
+            git_cache_socket: options.git_cache_socket.clone(),
         }
     }
 
@@ -25,6 +25,9 @@ impl Config {
     }
 
     pub fn clone_with_cwd(&self, cwd: PathBuf) -> Config {
-        Config { cwd, ..self.clone() }
+        Config {
+            cwd,
+            ..self.clone()
+        }
     }
 }

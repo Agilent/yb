@@ -1,8 +1,13 @@
 use std::fmt::Debug;
 
 use console::Style;
+use futures::{SinkExt, StreamExt};
 use git2::Repository;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use tokio::net::TcpStream;
+use tokio_util::codec::Decoder;
+use tokio_util::codec::LinesCodec;
+use git_reference_cache::GitReferenceCacheClient;
 
 use crate::commands::activate::activate_spec;
 use crate::commands::sync::actions::{
@@ -43,9 +48,27 @@ pub struct SyncCommand {
     exact: bool,
 }
 
+async fn connect() -> YbResult<()> {
+    let mut client = GitReferenceCacheClient::connect("127.0.0.1:2345").await?;
+    let a = client.clone("https://github.com/openembedded/meta-openembedded.git");
+    let b = client.clone("OK");
+
+    tokio::join!(a, b);
+
+    Ok(())
+}
+
 impl SubcommandRunner for SyncCommand {
     fn run(&self, config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
         let arena = toolshed::Arena::new();
+
+        tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .unwrap()
+            .block_on(async { connect().await })
+            .unwrap();
+
         let mut yb_env = require_yb_env(config, &arena)?;
 
         if let Some(spec_name) = &self.spec {
