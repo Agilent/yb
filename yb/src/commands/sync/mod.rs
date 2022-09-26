@@ -51,9 +51,9 @@ pub struct SyncCommand {
 async fn connect() -> YbResult<()> {
     let mut client = GitReferenceCacheClient::connect("127.0.0.1:2345").await?;
     let a = client.clone("https://github.com/openembedded/meta-openembedded.git");
-    let b = client.clone("OK");
+    //let b = client.clone("OK");
 
-    tokio::join!(a, b);
+    tokio::join!(a);
 
     Ok(())
 }

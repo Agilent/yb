@@ -1,8 +1,7 @@
-mod cache;
+pub mod cache;
 mod client;
 pub mod server;
-mod shutdown;
 mod error;
-mod message;
+pub mod service;
 
 pub use crate::client::GitReferenceCacheClient;
