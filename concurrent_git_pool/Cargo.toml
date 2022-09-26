@@ -16,5 +16,5 @@ tarpc = { version = "0.30.0", features = ["full"] }
 tracing = "0.1.36"
 
 [[bin]]
-name = "git_reference_cache"
+name = "concurrent_git_pool"
 path = "src/bin/server.rs"

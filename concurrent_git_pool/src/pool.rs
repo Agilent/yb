@@ -12,42 +12,12 @@ use tokio::sync::Mutex;
 use crate::error::{Error, Result};
 
 #[derive(Debug)]
-pub struct ConcurrentGitCache {
+pub struct Pool {
     cache: Mutex<HashMap<String, CacheEntry>>,
     root: TempDir,
 }
 
-fn dest_dir_for_remote<S>(remote: S) -> String
-where
-    S: AsRef<str>,
-{
-    let remote = remote.as_ref();
-    let mut hasher = Sha256::new();
-    hasher.update(remote);
-    format!("{:x}", hasher.finalize())
-}
-
-async fn clone_repo(
-    root: PathBuf,
-    remote: String,
-    dest_dir_name: String,
-) -> Result<PathBuf> {
-    let status = Command::new("git")
-        .current_dir(&root)
-        .env("GIT_TERMINAL_PROMPT", "0")
-        .arg("clone")
-        .arg(&remote)
-        .arg(&dest_dir_name)
-        .status()
-        .await?;
-
-    match status.success() {
-        true => Ok(root.join(&dest_dir_name)),
-        false => Err(Error::CloneFailed(status)),
-    }
-}
-
-impl ConcurrentGitCache {
+impl Pool {
     pub fn new() -> Self {
         Self {
             cache: Mutex::new(HashMap::new()),
@@ -101,17 +71,20 @@ impl ConcurrentGitCache {
 
     // Clone the given remote and add it to the cache, if not already present.
     // Returns path to the cached git repo.
-    pub async fn get_repo_for_remote<R>(&self, remote: R) -> Result<PathBuf>
+    pub async fn lookup_or_clone<R>(&self, remote: R) -> Result<PathBuf>
     where
         R: Into<String>,
     {
         let remote = remote.into();
-        let dest_dir_name = dest_dir_for_remote(&remote);
+        let dest_dir_name = {
+            let mut hasher = Sha256::new();
+            hasher.update(remote.clone());
+            format!("{:x}", hasher.finalize())
+        };
 
         let root = self.root.path().to_path_buf();
 
         let mut cache = self.cache.lock().await;
-
         match cache.entry(remote.clone()) {
             Entry::Occupied(entry) => {
                 return match entry.get().clone() {
@@ -145,35 +118,29 @@ impl ConcurrentGitCache {
     }
 }
 
+// Actually invokes 'git clone'
+async fn clone_repo(
+    root: PathBuf,
+    remote: String,
+    dest_dir_name: String,
+) -> Result<PathBuf> {
+    let status = Command::new("git")
+        .current_dir(&root)
+        .env("GIT_TERMINAL_PROMPT", "0")
+        .arg("clone")
+        .arg(&remote)
+        .arg(&dest_dir_name)
+        .status()
+        .await?;
+
+    match status.success() {
+        true => Ok(root.join(&dest_dir_name)),
+        false => Err(Error::CloneFailed(status)),
+    }
+}
+
 #[derive(Debug, Clone)]
 enum CacheEntry {
     Available(Result<PathBuf>),
     Cloning(Shared<Pin<Box<dyn Future<Output = Result<PathBuf>> + Send>>>),
 }
-
-// pub static GIT_CACHE: Lazy<ConcurrentGitCache> = Lazy::new(ConcurrentGitCache::new);
-//
-// #[cfg(test)]
-// mod test {
-//     use crate::util::git::concurrent_git_cache::GIT_CACHE;
-//     use tokio::join;
-//
-//     #[tokio::test]
-//     async fn clone1() {
-//         let poky = GIT_CACHE.get_repo_for_remote("https://github.com/yoctoproject/poky.git");
-//
-//         let bitbake =
-//             GIT_CACHE.get_repo_for_remote("https://github.com/openembedded/meta-openembedded.git");
-//
-//         join!(poky, bitbake);
-//     }
-//
-//     #[tokio::test]
-//     async fn clone2() {
-//         let bitbake =
-//             GIT_CACHE.get_repo_for_remote("https://github.com/openembedded/meta-openembedded.git");
-//         let poky = GIT_CACHE.get_repo_for_remote("https://github.com/yoctoproject/poky.git");
-//
-//         join!(poky, bitbake);
-//     }
-// }

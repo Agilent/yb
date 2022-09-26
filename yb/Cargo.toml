@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 bytebraise = { version = "0.1.2" }
-git_reference_cache = { path = "../git_reference_cache" }
+git_reference_cache = { path = "../concurrent_git_pool" }
 
 ansi_term = "0.12.1"
 async-process = "1.4.0"
