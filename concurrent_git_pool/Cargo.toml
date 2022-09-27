@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1"
 futures = "0.3.24"
+serde = { version = "1.0", features = ["derive"] }
 sha2 = "0.10.3"
 tempfile = "3"
 thiserror = "1"

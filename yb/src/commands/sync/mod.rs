@@ -7,7 +7,7 @@ use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use tokio::net::TcpStream;
 use tokio_util::codec::Decoder;
 use tokio_util::codec::LinesCodec;
-use git_reference_cache::GitReferenceCacheClient;
+use git_reference_cache::{Client};
 
 use crate::commands::activate::activate_spec;
 use crate::commands::sync::actions::{
@@ -49,11 +49,12 @@ pub struct SyncCommand {
 }
 
 async fn connect() -> YbResult<()> {
-    let mut client = GitReferenceCacheClient::connect("127.0.0.1:2345").await?;
-    let a = client.clone("https://github.com/openembedded/meta-openembedded.git");
+    let client = Client::connect("127.0.0.1:1234").await.unwrap();
+    let a = client.lookup_or_clone("https://github.com/openembedded/meta-openembed2ded.git");
     //let b = client.clone("OK");
 
-    tokio::join!(a);
+    let res = tokio::join!(a);
+    res.0.unwrap().unwrap();
 
     Ok(())
 }

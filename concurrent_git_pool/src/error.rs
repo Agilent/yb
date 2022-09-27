@@ -1,19 +1,19 @@
 use std::io;
-use std::sync::Arc;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-#[derive(Clone, Debug, Error)]
-pub enum Error {
-    #[error("The git clone operation failed with code {:?}", .0.code())]
-    CloneFailed(std::process::ExitStatus),
-    #[error("IO error encountered")]
-    IoError(Arc<io::Error>),
+#[derive(Clone, Debug, Error, Serialize, Deserialize)]
+pub enum ServiceError {
+    #[error("The git clone operation failed: {}", .0)]
+    CloneFailed(String),
+    #[error("IO error encountered: {}", .0)]
+    IoError(String),
 }
 
-impl From<io::Error> for Error {
+impl From<io::Error> for ServiceError {
     fn from(e: io::Error) -> Self {
-        Self::IoError(Arc::new(e))
+        Self::IoError(format!("{}", e))
     }
 }
 
-pub type Result<T> = std::result::Result<T, Error>;
+pub type ServiceResult<T> = std::result::Result<T, ServiceError>;

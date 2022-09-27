@@ -9,7 +9,7 @@ use std::pin::Pin;
 use tempfile::TempDir;
 use tokio::process::Command;
 use tokio::sync::Mutex;
-use crate::error::{Error, Result};
+use crate::error::{ServiceError, ServiceResult};
 
 #[derive(Debug)]
 pub struct Pool {
@@ -25,7 +25,7 @@ impl Pool {
         }
     }
 
-    pub async fn clone_in<C, R>(&self, cwd: C, remote: R)
+    pub async fn clone_in<C, R>(&self, cwd: C, remote: R) -> ServiceResult<()>
     where
         C: AsRef<Path>,
         R: AsRef<str>,
@@ -35,7 +35,8 @@ impl Pool {
             .current_dir(cwd)
             .output()
             .await
-            .unwrap();
+            .map_err(|e| e.into())
+            .map(|_| ())
     }
 
     pub async fn git_clone_command<R>(&self, remote: R) -> Command
@@ -69,9 +70,24 @@ impl Pool {
         command
     }
 
+    pub async fn lookup<U: AsRef<str>>(&self, uri: U) -> Option<ServiceResult<PathBuf>> {
+        let uri = uri.as_ref();
+
+        let cache = self.cache.lock().await;
+        match cache.get(uri) {
+            Some(entry) => {
+                match entry {
+                    CacheEntry::Available(p) => Some(p.clone()),
+                    CacheEntry::Cloning(_) => None,
+                }
+            }
+            _ => None
+        }
+    }
+
     // Clone the given remote and add it to the cache, if not already present.
     // Returns path to the cached git repo.
-    pub async fn lookup_or_clone<R>(&self, remote: R) -> Result<PathBuf>
+    pub async fn lookup_or_clone<R>(&self, remote: R) -> ServiceResult<PathBuf>
     where
         R: Into<String>,
     {
@@ -123,7 +139,7 @@ async fn clone_repo(
     root: PathBuf,
     remote: String,
     dest_dir_name: String,
-) -> Result<PathBuf> {
+) -> ServiceResult<PathBuf> {
     let status = Command::new("git")
         .current_dir(&root)
         .env("GIT_TERMINAL_PROMPT", "0")
@@ -135,12 +151,12 @@ async fn clone_repo(
 
     match status.success() {
         true => Ok(root.join(&dest_dir_name)),
-        false => Err(Error::CloneFailed(status)),
+        false => Err(ServiceError::CloneFailed(format!("{}", status))),
     }
 }
 
 #[derive(Debug, Clone)]
 enum CacheEntry {
-    Available(Result<PathBuf>),
-    Cloning(Shared<Pin<Box<dyn Future<Output = Result<PathBuf>> + Send>>>),
+    Available(ServiceResult<PathBuf>),
+    Cloning(Shared<Pin<Box<dyn Future<Output = ServiceResult<PathBuf>> + Send>>>),
 }
