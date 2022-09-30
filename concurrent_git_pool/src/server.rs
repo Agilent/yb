@@ -20,8 +20,8 @@ impl Service for Server {
         self.cache.lookup(uri).await
     }
 
-    async fn clone_in(self, _: Context, uri: String, parent_dir: PathBuf) -> ServiceResult<()> {
-        self.cache.clone_in(parent_dir, uri).await
+    async fn clone_in(self, _: Context, uri: String, parent_dir: Option<PathBuf>, directory: Option<String>) -> ServiceResult<()> {
+        self.cache.clone_in(parent_dir, uri, directory).await
     }
 }
 

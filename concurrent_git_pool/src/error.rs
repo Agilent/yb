@@ -16,4 +16,4 @@ impl From<io::Error> for ServiceError {
     }
 }
 
-pub type ServiceResult<T> = std::result::Result<T, ServiceError>;
+pub type ServiceResult<T> = Result<T, ServiceError>;

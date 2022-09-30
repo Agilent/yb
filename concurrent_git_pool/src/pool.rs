@@ -25,49 +25,36 @@ impl Pool {
         }
     }
 
-    pub async fn clone_in<C, R>(&self, cwd: C, remote: R) -> ServiceResult<()>
+    pub async fn clone_in<C, R, D>(&self, cwd: Option<C>, remote: R, directory: Option<D>) -> ServiceResult<()>
     where
         C: AsRef<Path>,
         R: AsRef<str>,
+        D: AsRef<str>,
     {
-        self.git_clone_command(remote)
-            .await
-            .current_dir(cwd)
+        let remote = remote.as_ref();
+        let path = self.lookup_or_clone(remote).await.unwrap();
+
+        let mut command = Command::new("git");
+        command.env("GIT_TERMINAL_PROMPT", "0");
+        command.arg("clone").arg(remote);
+        if let Some(directory) = directory {
+            command.arg(directory.as_ref());
+        }
+
+        command
+            .arg("--reference")
+            .arg(path.to_str().unwrap())
+            .arg("--dissociate");
+
+        if let Some(cwd) = cwd {
+            command.current_dir(cwd);
+        }
+
+        command
             .output()
             .await
             .map_err(|e| e.into())
             .map(|_| ())
-    }
-
-    pub async fn git_clone_command<R>(&self, remote: R) -> Command
-    where
-        R: AsRef<str>,
-    {
-        let cache = self.cache.lock().await;
-        let remote = remote.as_ref();
-
-        let mut command = Command::new("git");
-        command.arg("clone").arg(remote);
-
-        if let Some(entry) = cache.get(remote) {
-            let path = match entry.clone() {
-                // Repo is already on-disk
-                CacheEntry::Available(p) => p,
-                CacheEntry::Cloning(future) => {
-                    drop(cache);
-                    // Clone is in-flight
-                    future.await
-                }
-            }
-            .expect("TODO");
-
-            command
-                .arg("--reference")
-                .arg(path.to_str().unwrap())
-                .arg("--dissociate");
-        }
-
-        command
     }
 
     pub async fn lookup<U: AsRef<str>>(&self, uri: U) -> Option<ServiceResult<PathBuf>> {

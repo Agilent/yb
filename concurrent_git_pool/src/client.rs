@@ -7,6 +7,7 @@ use tokio::net::ToSocketAddrs;
 use crate::error::ServiceResult;
 use crate::service::ServiceClient;
 
+#[derive(Clone)]
 pub struct Client {
     inner: ServiceClient,
 }
@@ -29,8 +30,8 @@ impl Client {
         self.inner.lookup(Self::make_context(), uri.into())
     }
 
-    pub fn clone_in<U: Into<String>, P: Into<PathBuf>>(&self, uri: U, parent_dir: P) -> impl futures::Future<Output = Result<ServiceResult<()>, RpcError>> + '_ {
-        self.inner.clone_in(Self::make_context(), uri.into(), parent_dir.into())
+    pub fn clone_in<U: Into<String>, P: Into<PathBuf>, D: Into<String>>(&self, uri: U, parent_dir: Option<P>, directory: Option<D>) -> impl futures::Future<Output = Result<ServiceResult<()>, RpcError>> + '_ {
+        self.inner.clone_in(Self::make_context(), uri.into(), parent_dir.map(Into::into), directory.map(Into::into))
     }
 
     fn make_context() -> Context {
