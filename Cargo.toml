@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "concurrent_git_pool",
     "yb",
     "yb_tests",
 ]

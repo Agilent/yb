@@ -8,11 +8,14 @@ edition = "2018"
 
 [dependencies]
 bytebraise = { version = "0.1.2" }
+concurrent_git_pool = { path = "../concurrent_git_pool" }
 
 ansi_term = "0.12.1"
+anyhow = "1"
 async-process = "1.4.0"
+async-trait = "0.1.57"
 atty = "0.2.14"
-clap = { version = "3.2.6", features = ["derive"] }
+clap = { version = "3", features = ["derive"] }
 color-eyre = { git = "https://github.com/chris-laplante/color-eyre.git", branch = "cpl/suppress_backtrace" }
 console = "0.15.0"
 coredump = "0.1.1"
@@ -36,6 +39,7 @@ serde_yaml = "0.9.2"
 sha2 = "0.10.2"
 tempfile = "3.3.0"
 tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7.3", features = ["full"] }
 toolshed = "0.8.1"
 tracing = "0.1"
 tracing-error = { version = "0.2" }

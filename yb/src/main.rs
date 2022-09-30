@@ -16,7 +16,8 @@ fn parse_args_and_create_config() -> YbResult<(Config, YbOptions)> {
     Ok((config, opt))
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let _ = coredump::register_panic_handler();
     if env::var("NO_COLOR") == Err(std::env::VarError::NotPresent) {
         color_eyre::install().unwrap();
@@ -27,12 +28,12 @@ fn main() {
             .unwrap();
     }
 
-    if let Err(code) = real_main() {
+    if let Err(code) = real_main().await {
         std::process::exit(code);
     }
 }
 
-fn real_main() -> Result<(), i32> {
+async fn real_main() -> Result<(), i32> {
     // Automatically enable backtracing unless user explicitly disabled it
     if env::var("RUST_BACKTRACE").is_err() {
         env::set_var("RUST_BACKTRACE", "1");
@@ -52,7 +53,7 @@ fn real_main() -> Result<(), i32> {
             install_tracing(opt.level, mp.clone());
 
             // Run the subcommand
-            if let Err(err) = opt.command.run(&mut config, &mp) {
+            if let Err(err) = opt.command.run(&mut config, &mp).await {
                 eprintln!("internal error: {:?}", err);
                 return Err(1);
             }

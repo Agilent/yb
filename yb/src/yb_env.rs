@@ -8,6 +8,7 @@ use std::io::Read;
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
+use std::sync::Arc;
 
 use walkdir::WalkDir;
 
@@ -40,7 +41,7 @@ pub struct YbEnv<'arena> {
     dir: PathBuf,
     config: YbConf,
     active_spec: Option<ActiveSpec>,
-    streams_by_name: HashMap<String, Rc<Stream>>,
+    streams_by_name: HashMap<String, Arc<Stream>>,
     // TODO: remove if not going to use it
     _placeholder: PhantomData<&'arena str>,
 }
@@ -61,7 +62,7 @@ impl<'arena> YbEnv<'arena> {
         dir: PathBuf,
         config: YbConf,
         active_spec: Option<ActiveSpec>,
-        streams: HashMap<String, Rc<Stream>>,
+        streams: HashMap<String, Arc<Stream>>,
         _arena: &'arena toolshed::Arena,
     ) -> Self {
         Self {
@@ -73,7 +74,7 @@ impl<'arena> YbEnv<'arena> {
         }
     }
 
-    pub fn streams_by_name(&self) -> Iter<'_, String, Rc<Stream>> {
+    pub fn streams_by_name(&self) -> Iter<'_, String, Arc<Stream>> {
         self.streams_by_name.iter()
     }
 
@@ -91,7 +92,7 @@ impl<'arena> YbEnv<'arena> {
         Ok(())
     }
 
-    pub fn active_stream(&self) -> Option<Rc<Stream>> {
+    pub fn active_stream(&self) -> Option<Arc<Stream>> {
         // TODO: should be sanity check that this never be None
         self.active_spec
             .as_ref()
@@ -246,7 +247,7 @@ pub fn try_discover_yb_env<S: AsRef<Path>>(
                         eyre::bail!("active spec '{}' claims to be a member of stream '{}', but it was not found there", active_spec.name(), active_spec.from_stream);
                     }
 
-                    active_spec.weak_stream = Rc::downgrade(stream);
+                    active_spec.weak_stream = Arc::downgrade(stream);
                 } else {
                     eyre::bail!(
                         "active spec '{}' refers to non-existent stream '{}'",

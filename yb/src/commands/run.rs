@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use std::ffi::OsString;
 use std::process::Command;
 
@@ -24,8 +25,9 @@ pub struct RunCommand {
     flag_no_return_codes: bool,
 }
 
+#[async_trait]
 impl SubcommandRunner for RunCommand {
-    fn run(&self, config: &mut Config, _mp: &MultiProgress) -> YbResult<()> {
+    async fn run(&self, config: &mut Config, _mp: &MultiProgress) -> YbResult<()> {
         let arena = toolshed::Arena::new();
         let context = require_tool_context(config, &arena)?;
         let repos = context

@@ -2,11 +2,13 @@ use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
+use async_trait::async_trait;
 
 use bytebraise::editor::list_var_editor::ListVarEditor;
 
 use crate::commands::sync::actions::SyncAction;
 use crate::errors::YbResult;
+use crate::util::git::pool_helper::PoolHelper;
 use crate::util::paths::normalize_path;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -32,12 +34,13 @@ impl ModifyBBLayersConfSyncAction {
     }
 }
 
+#[async_trait]
 impl SyncAction for ModifyBBLayersConfSyncAction {
     fn is_force_required(&self) -> bool {
         false
     }
 
-    fn apply(&self) -> YbResult<()> {
+    async fn apply(&self, pool: &PoolHelper) -> YbResult<()> {
         let layer_path = normalize_path(&self.layer_path)
             .to_str()
             .unwrap()

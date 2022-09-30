@@ -1,8 +1,15 @@
 use std::fmt::Debug;
 
+use async_trait::async_trait;
 use console::Style;
+use futures::{SinkExt, StreamExt};
 use git2::Repository;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use tempfile::TempDir;
+use tokio::net::TcpStream;
+use tokio_util::codec::Decoder;
+use tokio_util::codec::LinesCodec;
+use concurrent_git_pool::{Client};
 
 use crate::commands::activate::activate_spec;
 use crate::commands::sync::actions::{
@@ -21,6 +28,7 @@ use crate::errors::YbResult;
 use crate::status_calculator::{compute_status, StatusCalculatorEvent, StatusCalculatorOptions};
 use crate::ui_ops::update_stream::{ui_op_update_stream, UiUpdateStreamOptions};
 use crate::util::git;
+use crate::util::git::pool_helper::PoolHelper;
 use crate::util::indicatif::MultiProgressHelpers;
 
 mod actions;
@@ -43,9 +51,11 @@ pub struct SyncCommand {
     exact: bool,
 }
 
+#[async_trait]
 impl SubcommandRunner for SyncCommand {
-    fn run(&self, config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
+    async fn run(&self, config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
         let arena = toolshed::Arena::new();
+
         let mut yb_env = require_yb_env(config, &arena)?;
 
         if let Some(spec_name) = &self.spec {
@@ -253,8 +263,9 @@ impl SubcommandRunner for SyncCommand {
             );
             progress.set_message("applying actions");
 
+            let client = PoolHelper::connect_or_local().await.unwrap();
             for action in sync_actions {
-                action.apply()?;
+                action.apply(&client).await?;
                 progress.inc(1);
             }
         } else if !sync_actions.is_empty() {

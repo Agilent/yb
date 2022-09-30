@@ -5,6 +5,7 @@ use std::fmt::{Debug, Formatter};
 use std::fs::File;
 use std::path::PathBuf;
 use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 use git2::{FetchOptions, Repository};
 use serde::{Deserialize, Serialize};
@@ -47,7 +48,7 @@ pub struct Stream {
     path: PathBuf,
     name: String,
     specs: HashMap<String, Spec>,
-    repo: Repository,
+    repo: Mutex<Repository>,
     config: StreamConfig,
 }
 
@@ -73,7 +74,7 @@ impl PartialEq for Stream {
 impl Eq for Stream {}
 
 impl Stream {
-    pub fn load(path: PathBuf) -> YbResult<Rc<Self>> {
+    pub fn load(path: PathBuf) -> YbResult<Arc<Self>> {
         let name = path.file_name().unwrap().to_str().unwrap().to_string();
         let mut specs = HashMap::new();
 
@@ -93,7 +94,7 @@ impl Stream {
 
         let repo = Repository::discover(&stream_contents)?;
 
-        Ok(Rc::new_cyclic(|self_weak| {
+        Ok(Arc::new_cyclic(|self_weak| {
             let specs = specs
                 .drain()
                 .map(|(name, mut spec)| {
@@ -106,14 +107,14 @@ impl Stream {
                 path,
                 name,
                 specs,
-                repo,
+                repo: Mutex::new(repo),
                 config,
             }
         }))
     }
 
-    pub fn reload(&self) -> YbResult<Rc<Self>> {
-        let repo = &self.repo;
+    pub fn reload(&self) -> YbResult<Arc<Self>> {
+        let repo = &self.repo.lock().unwrap();
 
         let upstream_name = get_remote_name_for_current_branch(repo)?.unwrap();
         let current_branch_name = get_current_local_branch_name(repo)?;
@@ -137,10 +138,6 @@ impl Stream {
 
     pub fn get_spec_by_name<S: AsRef<str>>(&self, name: S) -> Option<&Spec> {
         self.specs.get(name.as_ref())
-    }
-
-    pub fn repo(&self) -> &Repository {
-        &self.repo
     }
 
     pub fn name(&self) -> &String {

@@ -1,8 +1,6 @@
 // Some functions below (where noted) are from git2-rs which is dual-licensed MIT and Apache 2.0.
 // Those portions are Copyright (c) 2014 Alex Crichton
 
-pub mod concurrent_git_cache;
-
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -15,6 +13,8 @@ use git2::{
 };
 
 use crate::errors::YbResult;
+
+pub mod pool_helper;
 
 pub fn get_current_local_branch(repo: &Repository) -> YbResult<Branch> {
     match repo.head() {

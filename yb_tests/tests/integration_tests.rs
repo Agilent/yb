@@ -3,15 +3,19 @@ use std::path::{Path, PathBuf};
 
 use assert_cmd::Command;
 use color_eyre::eyre::Result;
-use yb::util::git::concurrent_git_cache::GIT_CACHE;
 
 use crate::common::DebugTempDir;
+
+use yb::util::git::pool_helper::PoolHelper;
 
 mod common;
 
 fn yb_cmd<P: AsRef<Path>>(cwd: P) -> Command {
     let mut ret = Command::cargo_bin("yb").unwrap();
     ret.current_dir(cwd).env_clear().env("NO_COLOR", "1");
+    if let Ok(var) = std::env::var("CONCURRENT_GIT_POOL") {
+        ret.env("CONCURRENT_GIT_POOL", var);
+    }
     ret
 }
 
@@ -74,12 +78,15 @@ async fn setup_yocto_env() -> Result<YoctoEnv> {
     let sources_dir = yocto_dir.join("sources");
     fs::create_dir(&sources_dir)?;
 
-    let poky = GIT_CACHE.clone_in(&sources_dir, "https://github.com/yoctoproject/poky.git");
-    let oe = GIT_CACHE.clone_in(
-        &sources_dir,
-        "https://github.com/openembedded/meta-openembedded.git",
+    let client = PoolHelper::connect_or_local().await.unwrap();
+
+    let poky = client.clone_in("https://github.com/yoctoproject/poky.git", Some(sources_dir.clone()), Option::<String>::None);
+    let oe = client.clone_in(
+        "https://github.com/openembedded/meta-openembedded.git", Some(sources_dir.clone()), Option::<String>::None
     );
-    tokio::join!(poky, oe);
+    let res = tokio::join!(poky, oe);
+    res.0.unwrap().unwrap();
+    res.1.unwrap().unwrap();
 
     let build_dir = yocto_dir.join("build");
     let conf_dir = build_dir.join("conf");

@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use color_eyre::Help;
 use indicatif::MultiProgress;
 use std::fs;
@@ -38,8 +39,9 @@ pub struct InitCommand {
     default_spec: Option<String>,
 }
 
+#[async_trait]
 impl SubcommandRunner for InitCommand {
-    fn run(&self, config: &mut Config, _mp: &MultiProgress) -> YbResult<()> {
+    async fn run(&self, config: &mut Config, _mp: &MultiProgress) -> YbResult<()> {
         let arena = toolshed::Arena::new();
         let context = determine_tool_context(config, &arena)?;
 
