@@ -83,12 +83,12 @@ async fn setup_yocto_env() -> Result<YoctoEnv> {
     let poky = client.clone_in(
         "https://github.com/yoctoproject/poky.git",
         Some(sources_dir.clone()),
-        Option::<String>::None,
+        None,
     );
     let oe = client.clone_in(
         "https://github.com/openembedded/meta-openembedded.git",
         Some(sources_dir.clone()),
-        Option::<String>::None,
+        None,
     );
     let res = tokio::join!(poky, oe);
     res.0.unwrap().unwrap();
