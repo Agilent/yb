@@ -80,9 +80,15 @@ async fn setup_yocto_env() -> Result<YoctoEnv> {
 
     let client = PoolHelper::connect_or_local().await.unwrap();
 
-    let poky = client.clone_in("https://github.com/yoctoproject/poky.git", Some(sources_dir.clone()), Option::<String>::None);
+    let poky = client.clone_in(
+        "https://github.com/yoctoproject/poky.git",
+        Some(sources_dir.clone()),
+        Option::<String>::None,
+    );
     let oe = client.clone_in(
-        "https://github.com/openembedded/meta-openembedded.git", Some(sources_dir.clone()), Option::<String>::None
+        "https://github.com/openembedded/meta-openembedded.git",
+        Some(sources_dir.clone()),
+        Option::<String>::None,
     );
     let res = tokio::join!(poky, oe);
     res.0.unwrap().unwrap();

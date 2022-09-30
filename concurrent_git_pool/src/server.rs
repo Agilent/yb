@@ -1,8 +1,8 @@
+use crate::error::ServiceResult;
 use crate::pool::Pool;
+use crate::service::Service;
 use std::path::PathBuf;
 use std::sync::Arc;
-use crate::service::Service;
-use crate::error::ServiceResult;
 use tarpc::context::Context;
 
 #[derive(Clone)]
@@ -20,15 +20,19 @@ impl Service for Server {
         self.cache.lookup(uri).await
     }
 
-    async fn clone_in(self, _: Context, uri: String, parent_dir: Option<PathBuf>, directory: Option<String>) -> ServiceResult<()> {
+    async fn clone_in(
+        self,
+        _: Context,
+        uri: String,
+        parent_dir: Option<PathBuf>,
+        directory: Option<String>,
+    ) -> ServiceResult<()> {
         self.cache.clone_in(parent_dir, uri, directory).await
     }
 }
 
 impl Server {
     pub fn new(cache: Arc<Pool>) -> Self {
-        Self {
-            cache,
-        }
+        Self { cache }
     }
 }

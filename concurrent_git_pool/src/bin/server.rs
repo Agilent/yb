@@ -1,15 +1,15 @@
+use clap::Parser;
+use concurrent_git_pool::pool::Pool;
+use concurrent_git_pool::server::Server;
+use concurrent_git_pool::service::Service;
+use futures::{future, prelude::*};
 use std::io;
 use std::sync::Arc;
-use clap::Parser;
-use futures::{future, prelude::*};
-use tokio::signal;
 use tarpc::{
     server::{self, Channel},
     tokio_serde::formats::Json,
 };
-use concurrent_git_pool::pool::Pool;
-use concurrent_git_pool::server::Server;
-use concurrent_git_pool::service::Service;
+use tokio::signal;
 
 #[derive(Parser)]
 struct Args {
@@ -25,7 +25,9 @@ async fn main() -> io::Result<()> {
 
     // JSON transport is provided by the json_transport tarpc module. It makes it easy
     // to start up a serde-powered json serialization strategy over TCP.
-    let mut listener = tarpc::serde_transport::tcp::listen(format!("127.0.0.1:{}", args.port), Json::default).await?;
+    let mut listener =
+        tarpc::serde_transport::tcp::listen(format!("127.0.0.1:{}", args.port), Json::default)
+            .await?;
     listener.config_mut().max_frame_length(usize::MAX);
     let server = listener
         // Ignore accept errors.

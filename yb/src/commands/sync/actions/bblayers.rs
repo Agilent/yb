@@ -1,8 +1,8 @@
+use async_trait::async_trait;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
-use async_trait::async_trait;
 
 use bytebraise::editor::list_var_editor::ListVarEditor;
 

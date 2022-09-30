@@ -1,3 +1,4 @@
+use crate::error::{ServiceError, ServiceResult};
 use futures::future::Shared;
 use futures::prelude::*;
 use sha2::{Digest, Sha256};
@@ -9,7 +10,6 @@ use std::pin::Pin;
 use tempfile::TempDir;
 use tokio::process::Command;
 use tokio::sync::Mutex;
-use crate::error::{ServiceError, ServiceResult};
 
 #[derive(Debug)]
 pub struct Pool {
@@ -25,7 +25,12 @@ impl Pool {
         }
     }
 
-    pub async fn clone_in<C, R, D>(&self, cwd: Option<C>, remote: R, directory: Option<D>) -> ServiceResult<()>
+    pub async fn clone_in<C, R, D>(
+        &self,
+        cwd: Option<C>,
+        remote: R,
+        directory: Option<D>,
+    ) -> ServiceResult<()>
     where
         C: AsRef<Path>,
         R: AsRef<str>,
@@ -50,11 +55,7 @@ impl Pool {
             command.current_dir(cwd);
         }
 
-        command
-            .output()
-            .await
-            .map_err(|e| e.into())
-            .map(|_| ())
+        command.output().await.map_err(|e| e.into()).map(|_| ())
     }
 
     pub async fn lookup<U: AsRef<str>>(&self, uri: U) -> Option<ServiceResult<PathBuf>> {
@@ -62,13 +63,11 @@ impl Pool {
 
         let cache = self.cache.lock().await;
         match cache.get(uri) {
-            Some(entry) => {
-                match entry {
-                    CacheEntry::Available(p) => Some(p.clone()),
-                    CacheEntry::Cloning(_) => None,
-                }
-            }
-            _ => None
+            Some(entry) => match entry {
+                CacheEntry::Available(p) => Some(p.clone()),
+                CacheEntry::Cloning(_) => None,
+            },
+            _ => None,
         }
     }
 

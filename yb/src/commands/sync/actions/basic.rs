@@ -1,6 +1,6 @@
+use async_trait::async_trait;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
-use async_trait::async_trait;
 
 use crate::commands::sync::actions::SyncAction;
 use crate::data_model::git::RemoteTrackingBranch;
@@ -165,7 +165,14 @@ impl SyncAction for CloneRepoSyncAction {
     }
 
     async fn apply(&self, pool: &PoolHelper) -> YbResult<()> {
-        pool.clone_in(&self.spec_repo.url, None, Some(self.dest_repo_path.to_str().unwrap().to_string())).await.unwrap().map_err(|e| e.into())
+        pool.clone_in(
+            &self.spec_repo.url,
+            None,
+            Some(self.dest_repo_path.to_str().unwrap().to_string()),
+        )
+        .await
+        .unwrap()
+        .map_err(|e| e.into())
 
         // Command::new("git")
         //     .arg("clone")

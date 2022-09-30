@@ -1,5 +1,5 @@
-use std::io;
 use serde::{Deserialize, Serialize};
+use std::io;
 use thiserror::Error;
 
 #[derive(Clone, Debug, Error, Serialize, Deserialize)]

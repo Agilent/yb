@@ -1,10 +1,10 @@
-pub mod pool;
 pub mod client;
-pub mod server;
 mod error;
+pub mod pool;
+pub mod server;
 pub mod service;
 
 pub use client::Client;
-pub use error::{ServiceResult, ServiceError};
+pub use error::{ServiceError, ServiceResult};
 
 pub use tarpc::client::RpcError;

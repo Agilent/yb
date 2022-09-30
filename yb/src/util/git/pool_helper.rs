@@ -1,6 +1,6 @@
+use concurrent_git_pool::{Client, RpcError, ServiceError, ServiceResult};
 use std::path::PathBuf;
 use tokio::process::Command;
-use concurrent_git_pool::{Client, RpcError, ServiceError, ServiceResult};
 
 #[derive(Clone)]
 pub struct PoolHelper {
@@ -11,15 +11,20 @@ impl PoolHelper {
     pub async fn connect_or_local() -> anyhow::Result<Self> {
         if let Ok(var) = std::env::var("CONCURRENT_GIT_POOL") {
             eprintln!("connecting to: {}", &var);
-            return Ok(Self { inner: Some(Client::connect(var).await?) });
+            return Ok(Self {
+                inner: Some(Client::connect(var).await?),
+            });
         }
 
-        Ok(Self {
-            inner: None,
-        })
+        Ok(Self { inner: None })
     }
 
-    pub async fn clone_in<U: Into<String>>(&self, uri: U, parent_dir: Option<PathBuf>, directory: Option<String>) -> Result<ServiceResult<()>, RpcError> {
+    pub async fn clone_in<U: Into<String>>(
+        &self,
+        uri: U,
+        parent_dir: Option<PathBuf>,
+        directory: Option<String>,
+    ) -> Result<ServiceResult<()>, RpcError> {
         if let Some(inner) = &self.inner {
             let uri = uri.into();
             eprintln!("cloning: {}", &uri);
