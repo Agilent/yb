@@ -1,10 +1,12 @@
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+use async_trait::async_trait;
 
 use crate::commands::sync::actions::SyncAction;
 use crate::data_model::git::RemoteTrackingBranch;
 use crate::errors::YbResult;
 use crate::spec::SpecRepo;
+use crate::util::git::pool_helper::PoolHelper;
 
 #[derive(Debug)]
 pub struct ResetGitWorkdirSyncAction {
@@ -17,12 +19,13 @@ impl ResetGitWorkdirSyncAction {
     }
 }
 
+#[async_trait]
 impl SyncAction for ResetGitWorkdirSyncAction {
     fn is_force_required(&self) -> bool {
         true
     }
 
-    fn apply(&self) -> YbResult<()> {
+    async fn apply(&self, pool: &PoolHelper) -> YbResult<()> {
         Command::new("git")
             .arg("reset")
             .arg("--hard")
@@ -49,12 +52,13 @@ impl CheckoutBranchSyncAction {
     }
 }
 
+#[async_trait]
 impl SyncAction for CheckoutBranchSyncAction {
     fn is_force_required(&self) -> bool {
         false
     }
 
-    fn apply(&self) -> YbResult<()> {
+    async fn apply(&self, pool: &PoolHelper) -> YbResult<()> {
         Command::new("git")
             .arg("checkout")
             .arg(&self.branch_name)
@@ -79,12 +83,13 @@ impl FastForwardPullSyncAction {
     }
 }
 
+#[async_trait]
 impl SyncAction for FastForwardPullSyncAction {
     fn is_force_required(&self) -> bool {
         false
     }
 
-    fn apply(&self) -> YbResult<()> {
+    async fn apply(&self, pool: &PoolHelper) -> YbResult<()> {
         Command::new("git")
             .arg("pull")
             .arg("--ff-only")
@@ -117,12 +122,13 @@ impl CreateLocalTrackingBranchSyncAction {
     }
 }
 
+#[async_trait]
 impl SyncAction for CreateLocalTrackingBranchSyncAction {
     fn is_force_required(&self) -> bool {
         false
     }
 
-    fn apply(&self) -> YbResult<()> {
+    async fn apply(&self, pool: &PoolHelper) -> YbResult<()> {
         Command::new("git")
             .arg("checkout")
             .arg("-b")
@@ -152,21 +158,24 @@ impl CloneRepoSyncAction {
     }
 }
 
+#[async_trait]
 impl SyncAction for CloneRepoSyncAction {
     fn is_force_required(&self) -> bool {
         false
     }
 
-    fn apply(&self) -> YbResult<()> {
-        Command::new("git")
-            .arg("clone")
-            .arg(&self.spec_repo.url)
-            .arg("-b")
-            .arg(&self.spec_repo.refspec)
-            .arg(&self.dest_repo_path)
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .output()?;
-        Ok(())
+    async fn apply(&self, pool: &PoolHelper) -> YbResult<()> {
+        pool.clone_in(&self.spec_repo.url, None, Some(self.dest_repo_path.to_str().unwrap().to_string())).await.unwrap().map_err(|e| e.into())
+
+        // Command::new("git")
+        //     .arg("clone")
+        //     .arg(&self.spec_repo.url)
+        //     .arg("-b")
+        //     .arg(&self.spec_repo.refspec)
+        //     .arg(&self.dest_repo_path)
+        //     .stdout(Stdio::null())
+        //     .stderr(Stdio::null())
+        //     .output()?;
+        // Ok(())
     }
 }

@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use indicatif::MultiProgress;
 
 use crate::commands::SubcommandRunner;
@@ -14,8 +15,9 @@ pub struct StreamAddCommand {
     name: Option<String>,
 }
 
+#[async_trait]
 impl SubcommandRunner for StreamAddCommand {
-    fn run(&self, config: &mut Config, _mp: &MultiProgress) -> YbResult<()> {
+    async fn run(&self, config: &mut Config, _mp: &MultiProgress) -> YbResult<()> {
         let mut add_stream_opts = AddStreamOptions::new(config);
         add_stream_opts.name(self.name.clone());
         add_stream_opts.uri(self.uri.clone());

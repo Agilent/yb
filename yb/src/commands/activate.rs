@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use indicatif::MultiProgress;
 
 use crate::commands::SubcommandRunner;
@@ -14,8 +15,9 @@ pub struct ActivateCommand {
     spec: String,
 }
 
+#[async_trait]
 impl SubcommandRunner for ActivateCommand {
-    fn run(&self, config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
+    async fn run(&self, config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
         let arena = toolshed::Arena::new();
         let mut yb_env = require_yb_env(config, &arena)?;
 

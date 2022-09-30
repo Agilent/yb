@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::path::{Path, PathBuf};
-use std::rc::Weak;
+use std::sync::Weak;
 
 use crate::data_model::Layer;
 use serde::{Deserialize, Deserializer, Serialize};

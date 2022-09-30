@@ -1,14 +1,17 @@
 use std::fmt::Debug;
+use async_trait::async_trait;
 
 pub(crate) use basic::*;
 pub(crate) use bblayers::*;
 
 use crate::errors::YbResult;
+use crate::util::git::pool_helper::PoolHelper;
 
 pub mod basic;
 pub mod bblayers;
 
-pub trait SyncAction: Debug {
+#[async_trait]
+pub trait SyncAction: Debug + Send + Sync {
     fn is_force_required(&self) -> bool;
-    fn apply(&self) -> YbResult<()>;
+    async fn apply(&self, pool: &PoolHelper) -> YbResult<()>;
 }

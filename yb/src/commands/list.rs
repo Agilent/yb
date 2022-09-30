@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use indicatif::MultiProgress;
 
 use crate::commands::SubcommandRunner;
@@ -9,8 +10,9 @@ use crate::errors::YbResult;
 #[derive(Debug, clap::Parser)]
 pub struct ListCommand {}
 
+#[async_trait]
 impl SubcommandRunner for ListCommand {
-    fn run(&self, config: &mut Config, _mp: &MultiProgress) -> YbResult<()> {
+    async fn run(&self, config: &mut Config, _mp: &MultiProgress) -> YbResult<()> {
         let arena = toolshed::Arena::new();
         let yb_env = require_yb_env(config, &arena)?;
         for stream in yb_env.streams_by_name() {

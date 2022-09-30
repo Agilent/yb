@@ -8,12 +8,14 @@ edition = "2018"
 
 [dependencies]
 bytebraise = { version = "0.1.2" }
-git_reference_cache = { path = "../concurrent_git_pool" }
+concurrent_git_pool = { path = "../concurrent_git_pool" }
 
 ansi_term = "0.12.1"
+anyhow = "1"
 async-process = "1.4.0"
+async-trait = "0.1.57"
 atty = "0.2.14"
-clap = { version = "3.2.6", features = ["derive"] }
+clap = { version = "3", features = ["derive"] }
 color-eyre = { git = "https://github.com/chris-laplante/color-eyre.git", branch = "cpl/suppress_backtrace" }
 console = "0.15.0"
 coredump = "0.1.1"

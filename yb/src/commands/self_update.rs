@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use self_update::{cargo_crate_version, Status};
 
 use indicatif::MultiProgress;
@@ -11,8 +12,9 @@ use crate::Config;
 #[derive(Debug, clap::Parser)]
 pub struct SelfUpdateCommand {}
 
+#[async_trait]
 impl SubcommandRunner for SelfUpdateCommand {
-    fn run(&self, _config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
+    async fn run(&self, _config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
         let status = self_update::backends::github::Update::configure()
             .repo_owner("Agilent")
             .repo_name("yb")

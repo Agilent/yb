@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use std::time::Duration;
 
 use console::{Emoji, Style};
@@ -97,8 +98,9 @@ lazy_static! {
     };
 }
 
+#[async_trait]
 impl SubcommandRunner for StatusCommand {
-    fn run(&self, config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
+    async fn run(&self, config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
         // Check the stream (if active) for updates
         let update_stream_opts = UiUpdateStreamOptions::new(config, mp);
         ui_op_update_stream(update_stream_opts)?;

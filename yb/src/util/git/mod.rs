@@ -14,6 +14,8 @@ use git2::{
 
 use crate::errors::YbResult;
 
+pub mod pool_helper;
+
 pub fn get_current_local_branch(repo: &Repository) -> YbResult<Branch> {
     match repo.head() {
         Ok(head) => Ok(Branch::wrap(head)),

@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use enum_dispatch::enum_dispatch;
 use indicatif::MultiProgress;
 
@@ -25,9 +26,10 @@ mod stream;
 mod sync;
 mod upgrade;
 
+#[async_trait]
 #[enum_dispatch]
 pub trait SubcommandRunner {
-    fn run(&self, config: &mut Config, mp: &MultiProgress) -> YbResult<()>;
+    async fn run(&self, config: &mut Config, mp: &MultiProgress) -> YbResult<()>;
 }
 
 #[enum_dispatch(SubcommandRunner)]
