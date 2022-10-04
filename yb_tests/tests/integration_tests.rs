@@ -3,10 +3,9 @@ use std::path::{Path, PathBuf};
 
 use assert_cmd::Command;
 use color_eyre::eyre::Result;
+use concurrent_git_pool_proc_macros::clone_repos;
 
 use crate::common::DebugTempDir;
-
-use yb::util::git::pool_helper::PoolHelper;
 
 mod common;
 mod environment;
@@ -79,21 +78,10 @@ async fn setup_yocto_env() -> Result<YoctoEnv> {
     let sources_dir = yocto_dir.join("sources");
     fs::create_dir(&sources_dir)?;
 
-    let client = PoolHelper::connect_or_local().await.unwrap();
-
-    let poky = client.clone_in(
-        "https://github.com/yoctoproject/poky.git",
-        Some(sources_dir.clone()),
-        None,
-    );
-    let oe = client.clone_in(
-        "https://github.com/openembedded/meta-openembedded.git",
-        Some(sources_dir.clone()),
-        None,
-    );
-    let res = tokio::join!(poky, oe);
-    res.0.unwrap().unwrap();
-    res.1.unwrap().unwrap();
+    clone_repos! {
+        "https://github.com/yoctoproject/poky.git" in &sources_dir,
+        "https://github.com/openembedded/meta-openembedded.git" in &sources_dir,
+    }
 
     let build_dir = yocto_dir.join("build");
     let conf_dir = build_dir.join("conf");
