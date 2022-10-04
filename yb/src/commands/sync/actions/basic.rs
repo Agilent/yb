@@ -6,7 +6,7 @@ use crate::commands::sync::actions::SyncAction;
 use crate::data_model::git::RemoteTrackingBranch;
 use crate::errors::YbResult;
 use crate::spec::SpecRepo;
-use crate::util::git::pool_helper::PoolHelper;
+use concurrent_git_pool::PoolHelper;
 
 #[derive(Debug)]
 pub struct ResetGitWorkdirSyncAction {

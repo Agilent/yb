@@ -1,4 +1,4 @@
-use concurrent_git_pool::{Client, RpcError, ServiceError, ServiceResult};
+use crate::{Client, RpcError, ServiceError, ServiceResult};
 use std::path::PathBuf;
 use tokio::process::Command;
 

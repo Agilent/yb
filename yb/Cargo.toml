@@ -23,7 +23,7 @@ enum_dispatch = "0.3.8"
 eyre = "0.6"
 futures = "0.3.23"
 git2 = "0.15.0"
-indicatif = { git = "https://github.com/chris-laplante/indicatif.git", branch = "cpl/zombie-prune-clear", features = ["improved_unicode"] }
+indicatif = { version = "0.17.1", features = ["improved_unicode"] }
 itertools = "0.10.3"
 lazy_static = "1.4.0"
 libc = "0.2.126"

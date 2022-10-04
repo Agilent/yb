@@ -4,6 +4,7 @@
 #![feature(try_find)]
 #![feature(box_syntax)]
 #![feature(async_closure)]
+#![feature(try_blocks)]
 
 pub use config::Config;
 

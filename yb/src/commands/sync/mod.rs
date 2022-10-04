@@ -28,7 +28,7 @@ use crate::errors::YbResult;
 use crate::status_calculator::{compute_status, StatusCalculatorEvent, StatusCalculatorOptions};
 use crate::ui_ops::update_stream::{ui_op_update_stream, UiUpdateStreamOptions};
 use crate::util::git;
-use crate::util::git::pool_helper::PoolHelper;
+use concurrent_git_pool::PoolHelper;
 use crate::util::indicatif::MultiProgressHelpers;
 
 mod actions;

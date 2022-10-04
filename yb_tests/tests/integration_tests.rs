@@ -9,6 +9,7 @@ use crate::common::DebugTempDir;
 use yb::util::git::pool_helper::PoolHelper;
 
 mod common;
+mod environment;
 
 fn yb_cmd<P: AsRef<Path>>(cwd: P) -> Command {
     let mut ret = Command::cargo_bin("yb").unwrap();

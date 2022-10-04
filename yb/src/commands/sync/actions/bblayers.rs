@@ -8,7 +8,7 @@ use bytebraise::editor::list_var_editor::ListVarEditor;
 
 use crate::commands::sync::actions::SyncAction;
 use crate::errors::YbResult;
-use crate::util::git::pool_helper::PoolHelper;
+use concurrent_git_pool::PoolHelper;
 use crate::util::paths::normalize_path;
 
 #[derive(Debug, PartialEq, Eq)]

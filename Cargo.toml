@@ -2,6 +2,7 @@
 
 members = [
     "concurrent_git_pool",
+    "concurrent_git_pool_proc_macros",
     "yb",
     "yb_tests",
 ]

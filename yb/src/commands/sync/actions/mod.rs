@@ -5,7 +5,7 @@ pub(crate) use basic::*;
 pub(crate) use bblayers::*;
 
 use crate::errors::YbResult;
-use crate::util::git::pool_helper::PoolHelper;
+use concurrent_git_pool::PoolHelper;
 
 pub mod basic;
 pub mod bblayers;
