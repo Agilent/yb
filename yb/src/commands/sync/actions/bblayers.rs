@@ -8,8 +8,8 @@ use bytebraise::editor::list_var_editor::ListVarEditor;
 
 use crate::commands::sync::actions::SyncAction;
 use crate::errors::YbResult;
-use concurrent_git_pool::PoolHelper;
 use crate::util::paths::normalize_path;
+use concurrent_git_pool::PoolHelper;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum BBLayersEditAction {
