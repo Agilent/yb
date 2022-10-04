@@ -42,11 +42,17 @@ impl PoolHelper {
         if let Some(parent_dir) = parent_dir {
             command.current_dir(parent_dir);
         }
-        let result = command.output().await;
 
+        let result = command.output().await;
         if let Err(e) = result {
-            return Ok(Err(ServiceError::CloneFailed(format!("{}", e))));
+            return Ok(Err(ServiceError::IoError(format!("failed to call status() on command: {:?}", e))));
         }
+
+        let result = result.unwrap();
+        if !result.status.success() {
+            return Ok(Err(ServiceError::CloneFailed(format!("exit code: {:?}", result))));
+        }
+
         Ok(Ok(()))
     }
 }
