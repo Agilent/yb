@@ -11,25 +11,19 @@ async fn bare_poky_not_supported() -> Result<()> {
     let t = DebugTempDir::new()?;
     let path = t.path();
 
-    let yocto_dir = path.join("yocto");
-    fs::create_dir(&yocto_dir)?;
-
-    let sources_dir = yocto_dir.join("sources");
-    fs::create_dir(&sources_dir)?;
-
     clone_repos! {
-        "https://github.com/yoctoproject/poky.git" in &sources_dir,
+        "https://github.com/yoctoproject/poky.git" in &path,
     }
 
-    let build_dir = yocto_dir.join("build");
+    let poky_dir = path.join("poky");
+    let build_dir = poky_dir.join("build");
     fs::create_dir(&build_dir)?;
 
     let path_var = std::env::var("PATH").unwrap();
     let path_var = format!(
         "{}:{}:{}",
-        sources_dir.join("poky").join("scripts").to_str().unwrap(),
-        sources_dir
-            .join("poky")
+        poky_dir.join("scripts").to_str().unwrap(),
+        poky_dir
             .join("bitbake")
             .join("bin")
             .to_str()
@@ -37,12 +31,12 @@ async fn bare_poky_not_supported() -> Result<()> {
         path_var
     );
 
-    yb_cmd(yocto_dir)
+    yb_cmd(poky_dir)
         .arg("upgrade")
         .env("PATH", path_var)
         .env("BBPATH", build_dir.to_str().unwrap())
         .assert()
         .failure();
-    
+
     Ok(())
 }
