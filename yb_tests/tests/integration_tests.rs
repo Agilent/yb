@@ -4,20 +4,10 @@ use std::path::{Path, PathBuf};
 use assert_cmd::Command;
 use color_eyre::eyre::Result;
 use concurrent_git_pool_proc_macros::clone_repos;
-
 use crate::common::DebugTempDir;
+use crate::common::yb_cmd;
 
 mod common;
-mod environment;
-
-fn yb_cmd<P: AsRef<Path>>(cwd: P) -> Command {
-    let mut ret = Command::cargo_bin("yb").unwrap();
-    ret.current_dir(cwd).env_clear().env("NO_COLOR", "1");
-    if let Ok(var) = std::env::var("CONCURRENT_GIT_POOL") {
-        ret.env("CONCURRENT_GIT_POOL", var);
-    }
-    ret
-}
 
 #[test]
 fn yb_init_bare() -> Result<()> {
