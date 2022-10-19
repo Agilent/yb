@@ -1,15 +1,11 @@
 use std::fmt::Debug;
 
 use async_trait::async_trait;
-use concurrent_git_pool::Client;
+
 use console::Style;
-use futures::{SinkExt, StreamExt};
+use futures::StreamExt;
 use git2::Repository;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
-use tempfile::TempDir;
-use tokio::net::TcpStream;
-use tokio_util::codec::Decoder;
-use tokio_util::codec::LinesCodec;
 
 use crate::commands::activate::activate_spec;
 use crate::commands::sync::actions::{

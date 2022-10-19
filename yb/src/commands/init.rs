@@ -101,7 +101,7 @@ impl SubcommandRunner for InitCommand {
                 let arena = toolshed::Arena::new();
                 let mut yb_env = require_yb_env(&config, &arena)?;
 
-                let spec = yb_env.find_spec(&default_spec_name)?.cloned();
+                let spec = yb_env.find_spec(default_spec_name)?.cloned();
                 if let Some(spec) = spec {
                     // TODO don't clone
                     yb_env.activate_spec(spec)?;

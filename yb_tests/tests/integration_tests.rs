@@ -1,11 +1,11 @@
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
+use crate::common::yb_cmd;
+use crate::common::DebugTempDir;
 use assert_cmd::Command;
 use color_eyre::eyre::Result;
 use concurrent_git_pool_proc_macros::clone_repos;
-use crate::common::DebugTempDir;
-use crate::common::yb_cmd;
 
 mod common;
 

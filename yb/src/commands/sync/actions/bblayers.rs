@@ -40,7 +40,7 @@ impl SyncAction for ModifyBBLayersConfSyncAction {
         false
     }
 
-    async fn apply(&self, pool: &PoolHelper) -> YbResult<()> {
+    async fn apply(&self, _pool: &PoolHelper) -> YbResult<()> {
         let layer_path = normalize_path(&self.layer_path)
             .to_str()
             .unwrap()

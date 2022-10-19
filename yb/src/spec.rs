@@ -1,12 +1,12 @@
+use eyre::Report;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::sync::Weak;
-use eyre::Report;
 
 use crate::data_model::Layer;
-use serde::{Deserialize, Deserializer, Serialize};
 use itertools::Itertools;
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::errors::YbResult;
 use crate::stream::Stream;
@@ -37,7 +37,7 @@ impl Eq for Spec {}
 impl Spec {
     pub fn load(_stream_name: String, path: &Path) -> YbResult<Self> {
         let f = File::open(path)?;
-        let ret = serde_yaml::from_reader::<_, Self>(f).map_err(|e| Report::from(e))?;
+        let ret = serde_yaml::from_reader::<_, Self>(f).map_err(Report::from)?;
 
         // Validation: ensure no overlap between repo URLs
         let mut urls_to_repos: HashMap<String, HashSet<String>> = HashMap::new();
@@ -53,7 +53,11 @@ impl Spec {
 
         for (url, repo_names) in urls_to_repos {
             if repo_names.len() > 1 {
-                eyre::bail!("URL {} corresponds to more than one spec repo: {}", url, repo_names.into_iter().join(", "));
+                eyre::bail!(
+                    "URL {} corresponds to more than one spec repo: {}",
+                    url,
+                    repo_names.into_iter().join(", ")
+                );
             }
         }
 

@@ -4,8 +4,8 @@ use proc_macro::TokenStream;
 use proc_macro2::Span;
 
 use quote::{quote, ToTokens};
-use syn::{Expr, Lit, parse_macro_input, Token};
 use syn::parse::{Parse, ParseStream};
+use syn::{parse_macro_input, Expr, Lit, Token};
 
 // Example:
 // ```no_run
@@ -49,10 +49,10 @@ impl ToTokens for ExprOrLit {
 impl Parse for ExprOrLit {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         if let Ok(expr) = input.parse::<Expr>() {
-            return Ok(ExprOrLit::Expr(expr));
+            Ok(ExprOrLit::Expr(expr))
         } else if input.peek(Lit) {
             return Ok(ExprOrLit::Lit(input.parse().unwrap()));
-        } else  {
+        } else {
             unimplemented!();
         }
     }
@@ -79,7 +79,11 @@ impl Parse for CloneCommand {
             input.parse::<Token![in]>().unwrap();
             parent_dir = Some(input.parse::<ExprOrLit>()?);
         }
-        Ok(CloneCommand { uri, parent_dir, directory })
+        Ok(CloneCommand {
+            uri,
+            parent_dir,
+            directory,
+        })
     }
 }
 
@@ -89,7 +93,10 @@ pub fn clone_repos(input: TokenStream) -> TokenStream {
     let input_len = macro_input.0.len();
 
     if input_len == 0 {
-        Span::call_site().unwrap().error("Need at least one clone command").emit();
+        Span::call_site()
+            .unwrap()
+            .error("Need at least one clone command")
+            .emit();
         return TokenStream::new();
     }
 
@@ -98,13 +105,18 @@ pub fn clone_repos(input: TokenStream) -> TokenStream {
         .drain(..)
         .map(|v| {
             let uri = v.uri;
-            let parent_dir = v.parent_dir.map(|p| quote!{Some(std::path::PathBuf::from(#p))}).unwrap_or(quote!{None});
-            let directory = v.directory.map(|p| quote!{Some(String::from(#p))}).unwrap_or(quote!{None});
+            let parent_dir = v
+                .parent_dir
+                .map(|p| quote! {Some(std::path::PathBuf::from(#p))})
+                .unwrap_or(quote! {None});
+            let directory = v
+                .directory
+                .map(|p| quote! {Some(String::from(#p))})
+                .unwrap_or(quote! {None});
 
             quote! {
                 client.clone_in(#uri, #parent_dir, #directory)
             }
-
         })
         .collect::<Vec<_>>();
 

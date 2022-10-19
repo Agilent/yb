@@ -1,8 +1,8 @@
-use color_eyre::eyre::Result;
-use std::fs;
-use concurrent_git_pool_proc_macros::clone_repos;
-use crate::common::DebugTempDir;
 use crate::common::yb_cmd;
+use crate::common::DebugTempDir;
+use color_eyre::eyre::Result;
+use concurrent_git_pool_proc_macros::clone_repos;
+use std::fs;
 
 mod common;
 
@@ -23,11 +23,7 @@ async fn bare_poky_not_supported() -> Result<()> {
     let path_var = format!(
         "{}:{}:{}",
         poky_dir.join("scripts").to_str().unwrap(),
-        poky_dir
-            .join("bitbake")
-            .join("bin")
-            .to_str()
-            .unwrap(),
+        poky_dir.join("bitbake").join("bin").to_str().unwrap(),
         path_var
     );
 

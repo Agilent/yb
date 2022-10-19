@@ -25,7 +25,7 @@ impl SyncAction for ResetGitWorkdirSyncAction {
         true
     }
 
-    async fn apply(&self, pool: &PoolHelper) -> YbResult<()> {
+    async fn apply(&self, _pool: &PoolHelper) -> YbResult<()> {
         Command::new("git")
             .arg("reset")
             .arg("--hard")
@@ -58,7 +58,7 @@ impl SyncAction for CheckoutBranchSyncAction {
         false
     }
 
-    async fn apply(&self, pool: &PoolHelper) -> YbResult<()> {
+    async fn apply(&self, _pool: &PoolHelper) -> YbResult<()> {
         Command::new("git")
             .arg("checkout")
             .arg(&self.branch_name)
@@ -89,7 +89,7 @@ impl SyncAction for FastForwardPullSyncAction {
         false
     }
 
-    async fn apply(&self, pool: &PoolHelper) -> YbResult<()> {
+    async fn apply(&self, _pool: &PoolHelper) -> YbResult<()> {
         Command::new("git")
             .arg("pull")
             .arg("--ff-only")
@@ -128,7 +128,7 @@ impl SyncAction for CreateLocalTrackingBranchSyncAction {
         false
     }
 
-    async fn apply(&self, pool: &PoolHelper) -> YbResult<()> {
+    async fn apply(&self, _pool: &PoolHelper) -> YbResult<()> {
         Command::new("git")
             .arg("checkout")
             .arg("-b")

@@ -188,7 +188,7 @@ where
         corresponding_spec_repo: spec_repo_status,
         path: path.clone(),
         recent_commits: commits,
-        layers: detect_layers(&path)?,
+        layers: detect_layers(path)?,
     }))
 }
 

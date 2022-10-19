@@ -32,7 +32,7 @@ impl SubcommandRunner for ActivateCommand {
 }
 
 pub fn activate_spec(yb_env: &mut YbEnv, name: &str) -> YbResult<()> {
-    let spec = yb_env.find_spec(&name)?.cloned();
+    let spec = yb_env.find_spec(name)?.cloned();
     if let Some(spec) = spec {
         // TODO don't clone
         yb_env.activate_spec(spec)?;

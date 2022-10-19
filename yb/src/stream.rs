@@ -4,7 +4,7 @@ use std::fmt;
 use std::fmt::{Debug, Formatter};
 use std::fs::File;
 use std::path::PathBuf;
-use std::rc::Rc;
+
 use std::sync::{Arc, Mutex};
 
 use git2::{FetchOptions, Repository};

@@ -1,7 +1,6 @@
+use assert_cmd::Command;
 use std::path::Path;
 pub use yb::util::debug_temp_dir::DebugTempDir;
-use assert_cmd::Command;
-
 
 pub fn yb_cmd<P: AsRef<Path>>(cwd: P) -> Command {
     let mut ret = Command::cargo_bin("yb").unwrap();

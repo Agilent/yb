@@ -7,7 +7,7 @@ use std::fs::{File, OpenOptions};
 use std::io::Read;
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
-use std::rc::Rc;
+
 use std::sync::Arc;
 
 use walkdir::WalkDir;
