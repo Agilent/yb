@@ -243,42 +243,42 @@ fn fast_forward(
 }
 
 // Adapted from libgit2-rs
-fn normal_merge(
-    repo: &Repository,
-    local: &git2::AnnotatedCommit,
-    remote: &git2::AnnotatedCommit,
-) -> Result<(), git2::Error> {
-    let local_tree = repo.find_commit(local.id())?.tree()?;
-    let remote_tree = repo.find_commit(remote.id())?.tree()?;
-    let ancestor = repo
-        .find_commit(repo.merge_base(local.id(), remote.id())?)?
-        .tree()?;
-    let mut idx = repo.merge_trees(&ancestor, &local_tree, &remote_tree, None)?;
-
-    if idx.has_conflicts() {
-        println!("Merge conficts detected...");
-        repo.checkout_index(Some(&mut idx), None)?;
-        return Ok(());
-    }
-    let result_tree = repo.find_tree(idx.write_tree_to(repo)?)?;
-    // now create the merge commit
-    let msg = format!("Merge: {} into {}", remote.id(), local.id());
-    let sig = repo.signature()?;
-    let local_commit = repo.find_commit(local.id())?;
-    let remote_commit = repo.find_commit(remote.id())?;
-    // Do our merge commit and set current branch head to that commit.
-    let _merge_commit = repo.commit(
-        Some("HEAD"),
-        &sig,
-        &sig,
-        &msg,
-        &result_tree,
-        &[&local_commit, &remote_commit],
-    )?;
-    // Set working tree to match head.
-    repo.checkout_head(None)?;
-    Ok(())
-}
+// fn normal_merge(
+//     repo: &Repository,
+//     local: &git2::AnnotatedCommit,
+//     remote: &git2::AnnotatedCommit,
+// ) -> Result<(), git2::Error> {
+//     let local_tree = repo.find_commit(local.id())?.tree()?;
+//     let remote_tree = repo.find_commit(remote.id())?.tree()?;
+//     let ancestor = repo
+//         .find_commit(repo.merge_base(local.id(), remote.id())?)?
+//         .tree()?;
+//     let mut idx = repo.merge_trees(&ancestor, &local_tree, &remote_tree, None)?;
+//
+//     if idx.has_conflicts() {
+//         println!("Merge conficts detected...");
+//         repo.checkout_index(Some(&mut idx), None)?;
+//         return Ok(());
+//     }
+//     let result_tree = repo.find_tree(idx.write_tree_to(repo)?)?;
+//     // now create the merge commit
+//     let msg = format!("Merge: {} into {}", remote.id(), local.id());
+//     let sig = repo.signature()?;
+//     let local_commit = repo.find_commit(local.id())?;
+//     let remote_commit = repo.find_commit(remote.id())?;
+//     // Do our merge commit and set current branch head to that commit.
+//     let _merge_commit = repo.commit(
+//         Some("HEAD"),
+//         &sig,
+//         &sig,
+//         &msg,
+//         &result_tree,
+//         &[&local_commit, &remote_commit],
+//     )?;
+//     // Set working tree to match head.
+//     repo.checkout_head(None)?;
+//     Ok(())
+// }
 
 // Adapted from libgit2-rs
 pub fn do_merge<'a>(
