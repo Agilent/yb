@@ -17,7 +17,7 @@ use tempfile::TempDir;
 use crate::errors::YbResult;
 use crate::spec::{ActiveSpec, SpecRepo};
 use crate::status_calculator::{compare_branch_to_remote_tracking_branch, StatusCalculatorEvent};
-use crate::util::debug_temp_dir::DebugTempDir;
+
 use crate::util::git::get_remote_tracking_branch;
 
 /// The status of the Yocto environment
@@ -430,7 +430,7 @@ where
             }
         }
     }
-    
+
     // Make another pass through spec repos to look for related repos
     for (spec_repo_subdir_name, spec_repo) in spec_repos {
         if repo_subdir_name == spec_repo_subdir_name {
