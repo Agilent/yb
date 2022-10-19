@@ -3,7 +3,6 @@ use std::fmt::Debug;
 use async_trait::async_trait;
 
 use console::Style;
-use futures::StreamExt;
 use git2::Repository;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 
