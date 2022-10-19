@@ -40,14 +40,14 @@ impl Spec {
         ret.stream_key = stream_key;
 
         // Validation: ensure no overlap between repo URLs
-        let mut urls_to_repos: HashMap<String, HashSet<String>> = HashMap::new();
+        let mut urls_to_repos: HashMap<&String, HashSet<&String>> = HashMap::new();
         for (repo_name, spec_repo) in &ret.repos {
-            let entry = urls_to_repos.entry(spec_repo.url.clone()).or_default();
-            entry.insert(repo_name.clone());
+            let entry = urls_to_repos.entry(&spec_repo.url).or_default();
+            entry.insert(repo_name);
 
             for (repo_name, spec_remote) in &spec_repo.extra_remotes {
-                let entry = urls_to_repos.entry(spec_remote.url.clone()).or_default();
-                entry.insert(repo_name.clone());
+                let entry = urls_to_repos.entry(&spec_remote.url).or_default();
+                entry.insert(repo_name);
             }
         }
 
