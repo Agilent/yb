@@ -2,9 +2,11 @@ use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::sync::Weak;
+use eyre::Report;
 
 use crate::data_model::Layer;
 use serde::{Deserialize, Deserializer, Serialize};
+use itertools::Itertools;
 
 use crate::errors::YbResult;
 use crate::stream::Stream;
@@ -35,7 +37,27 @@ impl Eq for Spec {}
 impl Spec {
     pub fn load(_stream_name: String, path: &Path) -> YbResult<Self> {
         let f = File::open(path)?;
-        serde_yaml::from_reader::<_, Self>(f).map_err(|e| e.into())
+        let ret = serde_yaml::from_reader::<_, Self>(f).map_err(|e| Report::from(e))?;
+
+        // Validation: ensure no overlap between repo URLs
+        let mut urls_to_repos: HashMap<String, HashSet<String>> = HashMap::new();
+        for (repo_name, spec_repo) in &ret.repos {
+            let entry = urls_to_repos.entry(spec_repo.url.clone()).or_default();
+            entry.insert(repo_name.clone());
+
+            for (repo_name, spec_remote) in &spec_repo.extra_remotes {
+                let entry = urls_to_repos.entry(spec_remote.url.clone()).or_default();
+                entry.insert(repo_name.clone());
+            }
+        }
+
+        for (url, repo_names) in urls_to_repos {
+            if repo_names.len() > 1 {
+                eyre::bail!("URL {} corresponds to more than one spec repo: {}", url, repo_names.into_iter().join(", "));
+            }
+        }
+
+        Ok(ret)
     }
 
     pub fn name(&self) -> String {
