@@ -91,7 +91,8 @@ pub fn op_add_stream(options: AddStreamOptions) -> YbResult<()> {
         eyre::bail!("a stream with name {} already exists", &stream_name);
     }
 
-    Stream::load(PathBuf::from(tmpdir.path()))?;
+    todo!();
+    //Stream::load(PathBuf::from(tmpdir.path()))?;
 
     // Everything was OK, so move into stream directory
     fs::rename(tmpdir.into_path(), &stream_root_dir)?;

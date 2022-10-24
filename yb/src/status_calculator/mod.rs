@@ -23,6 +23,7 @@ use crate::util::git::{
     get_remote_for_current_branch, get_remote_tracking_branch, ssh_agent_remote_callbacks,
 };
 use crate::util::paths::list_subdirectories_sorted;
+use crate::yb_env::ActiveSpecStatus;
 
 pub mod bblayers_manager;
 
@@ -220,7 +221,7 @@ where
     };
 
     let active_spec_maybe = match &context {
-        ToolContext::Yb(yb_env) => yb_env.active_spec(),
+        ToolContext::Yb(yb_env) => yb_env.active_spec_status(),
         _ => None,
     };
 
@@ -245,7 +246,10 @@ where
     // As we discover spec repos on-disk, we will remove the corresponding entry from this map.
     // What is left is the set of missing spec repos.
     let mut active_spec_repos = active_spec_maybe
-        .map(|s| s.spec.repos.clone())
+        .map(|s| match s {
+            ActiveSpecStatus::StreamBroken => unimplemented!(),
+            ActiveSpecStatus::Active(active_spec) => active_spec.spec.repos.clone(),
+        })
         .unwrap_or_default();
 
     let mut status_entries: Vec<ComputedStatusEntry> = Vec::with_capacity(sources_subdirs.len());
@@ -293,7 +297,10 @@ where
         source_dirs: status_entries,
         enabled_layers: bblayers,
         missing_repos,
-        active_spec: active_spec_maybe.cloned(),
+        active_spec: active_spec_maybe.map(|status| match status {
+            ActiveSpecStatus::StreamBroken => unimplemented!(),
+            ActiveSpecStatus::Active(active_spec) => active_spec.clone(),
+        }),
         bblayers_path: context.build_dir().join("conf").join("bblayers.conf"),
     };
 

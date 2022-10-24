@@ -8,7 +8,7 @@ use crate::errors::YbResult;
 use crate::ops::update_stream::{op_update_stream, UpdateStreamEvent, UpdateStreamOptions};
 use crate::util::indicatif::{IndicatifHelpers, MultiProgressHelpers};
 
-use crate::yb_env::ConfigActiveSpecStatus;
+use crate::yb_env::ActiveSpecStatus;
 
 #[derive(Debug)]
 pub struct UiUpdateStreamOptions<'cfg> {
@@ -55,15 +55,15 @@ pub fn ui_op_update_stream(options: UiUpdateStreamOptions) -> YbResult<()> {
 
     let active_spec_status = yb_env.active_spec_status();
     match &active_spec_status {
-        ConfigActiveSpecStatus::ActiveSpec { name } => {
-            options.mp.note(&format!("active spec: {}", name))
+        Some(ActiveSpecStatus::Active(active_spec)) => {
+            options.mp.note(&format!("active spec: {}", active_spec.spec.name()))
         }
-        ConfigActiveSpecStatus::NoActiveSpec => options
+        Some(ActiveSpecStatus::StreamBroken) => {
+            unimplemented!();
+        }
+        None => options
             .mp
             .note("no active spec; consider using the 'yb activate' command"),
-        ConfigActiveSpecStatus::NoYbEnv => options
-            .mp
-            .warn("consider using the 'yb init' command to create a yb environment"),
     }
 
     let update_opts = UpdateStreamOptions::new(options.config);

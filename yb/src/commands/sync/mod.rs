@@ -58,7 +58,7 @@ impl SubcommandRunner for SyncCommand {
             activate_spec(&mut yb_env, spec_name)?;
         }
 
-        if yb_env.active_spec().is_none() {
+        if yb_env.active_spec_status().is_none() {
             eyre::bail!("cannot sync unless a spec is active - see the 'yb activate' command");
         }
 

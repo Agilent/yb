@@ -2,14 +2,12 @@ use eyre::Report;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::path::{Path, PathBuf};
-use std::sync::Weak;
-
 use crate::data_model::Layer;
 use itertools::Itertools;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::errors::YbResult;
-use crate::stream::Stream;
+use crate::stream_db::StreamKey;
 
 const SPEC_FORMAT_VERSION: u32 = 1;
 
@@ -23,7 +21,7 @@ pub struct Spec {
     pub(crate) repos: HashMap<String, SpecRepo>,
 
     #[serde(skip)]
-    pub(crate) weak_stream: Weak<Stream>,
+    pub(crate) stream_key: StreamKey,
 }
 
 impl PartialEq for Spec {
@@ -35,9 +33,10 @@ impl PartialEq for Spec {
 impl Eq for Spec {}
 
 impl Spec {
-    pub fn load(_stream_name: String, path: &Path) -> YbResult<Self> {
+    pub fn load(path: &Path, stream_key: StreamKey) -> YbResult<Self> {
         let f = File::open(path)?;
-        let ret = serde_yaml::from_reader::<_, Self>(f).map_err(Report::from)?;
+        let mut ret = serde_yaml::from_reader::<_, Self>(f).map_err(Report::from)?;
+        ret.stream_key = stream_key;
 
         // Validation: ensure no overlap between repo URLs
         let mut urls_to_repos: HashMap<String, HashSet<String>> = HashMap::new();
@@ -107,8 +106,6 @@ pub enum SpecRepoLayer {
 }
 
 impl SpecRepo {
-    pub fn all_remotes(&self) {}
-
     pub fn layers(&self) -> Option<HashSet<SpecRepoLayer>> {
         self.layers.clone().map(|layer_names| {
             layer_names
@@ -149,21 +146,10 @@ pub struct SpecRemote {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ActiveSpec {
     pub(crate) spec: Spec,
-
     pub(crate) from_stream: String,
 
     #[serde(skip)]
-    pub(crate) weak_stream: Weak<Stream>,
-}
-
-impl From<Spec> for ActiveSpec {
-    fn from(spec: Spec) -> Self {
-        ActiveSpec {
-            from_stream: spec.weak_stream.upgrade().unwrap().name().clone(),
-            weak_stream: spec.weak_stream.clone(),
-            spec,
-        }
-    }
+    pub(crate) stream_key: StreamKey,
 }
 
 impl ActiveSpec {
@@ -171,7 +157,7 @@ impl ActiveSpec {
         self.spec.header.name.clone()
     }
 
-    pub fn stream(&self) -> Weak<Stream> {
-        self.weak_stream.clone()
+    pub fn stream_key(&self) -> StreamKey {
+        self.stream_key
     }
 }

@@ -21,7 +21,7 @@ impl SubcommandRunner for ActivateCommand {
         let arena = toolshed::Arena::new();
         let mut yb_env = require_yb_env(config, &arena)?;
 
-        if yb_env.streams_by_name().len() == 0 {
+        if yb_env.stream_db().is_empty() {
             mp.warn("couldn't activate a spec because there are no streams");
             mp.warn("use 'yb stream add' first");
             panic!();

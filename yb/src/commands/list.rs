@@ -15,12 +15,13 @@ impl SubcommandRunner for ListCommand {
     async fn run(&self, config: &mut Config, _mp: &MultiProgress) -> YbResult<()> {
         let arena = toolshed::Arena::new();
         let yb_env = require_yb_env(config, &arena)?;
-        for stream in yb_env.streams_by_name() {
-            println!("{}:", stream.0);
-            for spec in stream.1.specs_by_name() {
-                println!("\t{}", spec.0);
-            }
-        }
+
+        // for stream in yb_env.stream_db().streams() {
+        //     println!("{}:", stream.1.name());
+        //     for spec in stream.1.specs_by_name() {
+        //         println!("\t{}", spec.0);
+        //     }
+        // }
 
         Ok(())
     }

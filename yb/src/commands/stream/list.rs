@@ -15,6 +15,8 @@ impl SubcommandRunner for StreamListCommand {
     async fn run(&self, config: &mut Config, _mp: &MultiProgress) -> YbResult<()> {
         let arena = toolshed::Arena::new();
         let yb_env = require_yb_env(config, &arena)?;
+
+        // TODO: use stream DB instead of iterating through dir
         let streams_dir = yb_env.streams_dir();
 
         if streams_dir.exists() {

@@ -1,4 +1,3 @@
-use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 use std::fmt;
 use std::fmt::{Debug, Formatter};
@@ -13,13 +12,14 @@ use walkdir::WalkDir;
 
 use crate::errors::YbResult;
 use crate::spec::Spec;
+use crate::stream_db::StreamKey;
 use crate::util::git::{
     do_merge, get_current_local_branch_name, get_remote_name_for_current_branch,
     ssh_agent_remote_callbacks,
 };
 use crate::util::paths::{is_hidden, is_yaml_file};
 
-// TODO: don't make pub, move logic here
+// TODO: don't make pub, move logic here?
 const STREAM_CONFIG_FILE_VERSION: u32 = 1;
 pub const STREAM_CONTENT_ROOT_SUBDIR: &str = "contents";
 pub const STREAM_CONFIG_FILE: &str = "stream.yaml";
@@ -47,9 +47,10 @@ impl StreamConfig {
 pub struct Stream {
     path: PathBuf,
     name: String,
-    specs: HashMap<String, Spec>,
     repo: Mutex<Repository>,
     config: StreamConfig,
+    specs: StreamSpecs,
+    key: StreamKey,
 }
 
 impl Debug for Stream {
@@ -58,89 +59,115 @@ impl Debug for Stream {
             .field("path", &self.path)
             .field("name", &self.name)
             .field("specs", &self.specs)
+            .field("key", &self.key)
+            .field("config", &self.config)
             .finish_non_exhaustive()
     }
 }
-
-impl PartialEq for Stream {
-    fn eq(&self, other: &Self) -> bool {
-        self.path == other.path
-            && self.name == other.name
-            && self.specs == other.specs
-            && self.config == other.config
-    }
-}
-
-impl Eq for Stream {}
+//
+// impl PartialEq for Stream {
+//     fn eq(&self, other: &Self) -> bool {
+//         self.path == other.path
+//             && self.name == other.name
+//             && self.specs == other.specs
+//             && self.config == other.config
+//     }
+// }
+//
+// impl Eq for Stream {}
 
 impl Stream {
-    pub fn load(path: PathBuf) -> YbResult<Arc<Self>> {
-        let name = path.file_name().unwrap().to_str().unwrap().to_string();
+    pub fn load(path: PathBuf, name: String, stream_key: StreamKey) -> YbResult<Self> {
+        let f = File::open(path.join(STREAM_CONFIG_FILE))?;
+        let config: StreamConfig = serde_yaml::from_reader(&f)?;
+
+        let stream_contents_dir = path.join(STREAM_CONTENT_ROOT_SUBDIR);
+        let repo = Repository::discover(&stream_contents_dir)?;
+
+        Ok(
+            Stream {
+                path,
+                name,
+                specs: Self::load_specs(stream_contents_dir, stream_key)?,
+                repo: Mutex::new(repo),
+                config,
+                key: stream_key,
+        })
+    }
+
+    fn load_specs(stream_contents_dir: PathBuf, stream_key: StreamKey) -> YbResult<StreamSpecs> {
         let mut specs = HashMap::new();
 
-        let stream_contents = path.join(STREAM_CONTENT_ROOT_SUBDIR);
-        for spec_yaml in WalkDir::new(&stream_contents)
+        // Iterate over each spec yaml
+        for spec_yaml in WalkDir::new(&stream_contents_dir)
             .into_iter()
             .filter_entry(|e| !is_hidden(e))
             .filter(|e| is_yaml_file(e.as_ref().unwrap()))
         {
             let spec_path = spec_yaml?.into_path();
-            let spec = Spec::load(name.clone(), &spec_path)?;
-            specs.insert(spec.name(), spec);
+            if let Ok(spec) = Spec::load(&spec_path, stream_key) {
+                specs.insert(spec.name(), spec);
+            } else {
+                // Error encountered while loading spec
+                return Ok(StreamSpecs::Broken);
+            }
         }
 
-        let f = File::open(path.join(STREAM_CONFIG_FILE))?;
-        let config = serde_yaml::from_reader::<_, StreamConfig>(&f)?;
-
-        let repo = Repository::discover(&stream_contents)?;
-
-        Ok(Arc::new_cyclic(|self_weak| {
-            let specs = specs
-                .drain()
-                .map(|(name, mut spec)| {
-                    spec.weak_stream = self_weak.clone();
-                    (name, spec)
-                })
-                .collect();
-
-            Stream {
-                path,
-                name,
-                specs,
-                repo: Mutex::new(repo),
-                config,
-            }
-        }))
+        Ok(StreamSpecs::Loaded(specs))
     }
 
-    pub fn reload(&self) -> YbResult<Arc<Self>> {
-        let repo = &self.repo.lock().unwrap();
+    pub fn fetch(&self) -> YbResult<()> {
+        let repo = self.repo.lock().unwrap();
 
-        let upstream_name = get_remote_name_for_current_branch(repo)?.unwrap();
-        let current_branch_name = get_current_local_branch_name(repo)?;
+        let upstream_name = get_remote_name_for_current_branch(&repo)?.unwrap();
 
         let mut remote = repo.find_remote(&upstream_name)?;
         let mut fetch_options = FetchOptions::new();
         fetch_options.remote_callbacks(ssh_agent_remote_callbacks());
         remote.fetch(&[] as &[&str], Some(&mut fetch_options), None)?;
+        Ok(())
+    }
+
+    pub fn pull(&mut self) -> YbResult<()> {
+        self.fetch()?;
+
+        let repo = self.repo.lock().unwrap();
+        let current_branch_name = get_current_local_branch_name(&repo)?;
 
         let fetch_head = repo.find_reference("FETCH_HEAD")?;
         let fetch_commit = repo.reference_to_annotated_commit(&fetch_head)?;
 
-        do_merge(repo, &current_branch_name, fetch_commit)?;
+        do_merge(&repo, &current_branch_name, fetch_commit)?;
 
-        Self::load(self.path.clone())
-    }
+        let stream_contents_dir = self.path.join(STREAM_CONTENT_ROOT_SUBDIR);
+        self.specs = Self::load_specs(stream_contents_dir, self.key)?;
 
-    pub fn specs_by_name(&self) -> Iter<'_, String, Spec> {
-        self.specs.iter()
+        Ok(())
     }
 
     pub fn get_spec_by_name<S: AsRef<str>>(&self, name: S) -> Option<&Spec> {
-        self.specs.get(name.as_ref())
+        match &self.specs {
+            StreamSpecs::Loaded(specs) => specs.get(name.as_ref()),
+            StreamSpecs::Broken => None,
+        }
     }
 
     pub fn name(&self) -> &String {
         &self.name
     }
+
+    pub fn key(&self) -> StreamKey {
+        self.key
+    }
+
+    pub fn is_broken(&self) -> bool {
+        matches!(self.specs, StreamSpecs::Broken)
+    }
+}
+
+
+#[derive(Debug)]
+pub enum StreamSpecs {
+    Loaded(HashMap<String, Spec>),
+    Broken,
 }

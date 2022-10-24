@@ -18,6 +18,7 @@ pub mod ops;
 pub mod spec;
 pub mod status_calculator;
 pub mod stream;
+pub mod stream_db;
 pub mod ui_ops;
 pub mod util;
 pub mod yb_conf;

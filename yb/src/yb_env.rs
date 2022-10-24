@@ -1,22 +1,17 @@
 use core::fmt::{self, Debug, Formatter};
 use eyre::Context;
-use std::collections::hash_map::Iter;
-use std::collections::HashMap;
 use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::Read;
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 
-use std::sync::Arc;
-
-use walkdir::WalkDir;
-
 use crate::core::tool_context::YoctoEnvironment;
 use crate::errors::YbResult;
 use crate::spec::{ActiveSpec, Spec};
-use crate::stream::Stream;
-use crate::util::paths::{find_dir_recurse_upwards, is_hidden};
+use crate::stream::{Stream};
+use crate::stream_db::{StreamDb, StreamKey};
+use crate::util::paths::{find_dir_recurse_upwards};
 use crate::yb_conf::YbConf;
 
 const YB_ENV_DIRECTORY: &str = ".yb";
@@ -24,15 +19,16 @@ const STREAMS_SUBDIR: &str = "streams";
 const YB_CONF_FILE: &str = "yb.yaml";
 const ACTIVE_SPEC_FILE: &str = "active_spec.yaml";
 
-pub enum ConfigActiveSpecStatus {
-    ActiveSpec { name: String },
-    NoActiveSpec,
-    NoYbEnv,
+
+#[derive(Debug)]
+pub enum ActiveSpecStatus {
+    Active(ActiveSpec),
+    StreamBroken,
 }
 
-impl ConfigActiveSpecStatus {
+impl ActiveSpecStatus {
     pub fn has_active_spec(&self) -> bool {
-        matches!(&self, ConfigActiveSpecStatus::ActiveSpec { .. })
+        matches!(&self, ActiveSpecStatus::Active { .. })
     }
 }
 
@@ -40,8 +36,8 @@ pub struct YbEnv<'arena> {
     /// Absolute path to the .yb directory
     dir: PathBuf,
     config: YbConf,
-    active_spec: Option<ActiveSpec>,
-    streams_by_name: HashMap<String, Arc<Stream>>,
+    active_spec_status: Option<ActiveSpecStatus>,
+    streams: StreamDb,
     // TODO: remove if not going to use it
     _placeholder: PhantomData<&'arena str>,
 }
@@ -51,8 +47,8 @@ impl<'arena> Debug for YbEnv<'arena> {
         f.debug_struct("YbEnv")
             .field("dir", &self.dir)
             .field("config", &self.config)
-            .field("active_spec", &self.active_spec)
-            .field("streams_by_name", &self.streams_by_name)
+            .field("active_spec_status", &self.active_spec_status)
+            .field("streams", &self.streams)
             .finish_non_exhaustive()
     }
 }
@@ -61,25 +57,30 @@ impl<'arena> YbEnv<'arena> {
     fn new(
         dir: PathBuf,
         config: YbConf,
-        active_spec: Option<ActiveSpec>,
-        streams: HashMap<String, Arc<Stream>>,
+        active_spec: Option<ActiveSpecStatus>,
+        streams: StreamDb,
         _arena: &'arena toolshed::Arena,
     ) -> Self {
         Self {
             dir,
             config,
-            active_spec,
-            streams_by_name: streams,
+            active_spec_status: active_spec,
+            streams,
             _placeholder: PhantomData,
         }
     }
 
-    pub fn streams_by_name(&self) -> Iter<'_, String, Arc<Stream>> {
-        self.streams_by_name.iter()
+    pub fn stream_db(&self) -> &StreamDb {
+        &self.streams
+    }
+
+    pub fn stream_db_mut(&mut self) -> &mut StreamDb {
+        &mut self.streams
     }
 
     pub fn activate_spec(&mut self, spec: Spec) -> YbResult<()> {
-        let active_spec = ActiveSpec::from(spec);
+        let active_spec = self.streams.make_active_spec(spec)?;
+
         let dest = self.dir.join(ACTIVE_SPEC_FILE);
         let f = OpenOptions::new()
             .write(true)
@@ -88,48 +89,32 @@ impl<'arena> YbEnv<'arena> {
             .open(&dest)?;
         serde_yaml::to_writer(&f, &active_spec)?;
 
-        self.active_spec = Some(active_spec);
+        self.active_spec_status = Some(ActiveSpecStatus::Active(active_spec));
         Ok(())
     }
 
-    pub fn active_stream(&self) -> Option<Arc<Stream>> {
-        // TODO: should be sanity check that this never be None
-        self.active_spec
-            .as_ref()
-            .and_then(|s| s.weak_stream.upgrade())
+    pub fn active_stream_mut(&mut self) -> Option<&mut Stream> {
+        let key = self.active_spec_status
+            .as_ref().and_then(|a| {
+            match a {
+                ActiveSpecStatus::Active(spec) => Some(spec.stream_key),
+                _ => None,
+            }
+        });
+
+        key.and_then(move |k| self.streams.stream_mut(k))
     }
 
     pub fn find_spec<S: AsRef<str>>(&self, name: S) -> YbResult<Option<&Spec>> {
-        let mut ret = None;
-        for stream in self.streams_by_name.values() {
-            let s = stream.get_spec_by_name(&name);
-            if s.is_some() {
-                if ret.is_some() {
-                    eyre::bail!("spec '{}' found in multiple streams", name.as_ref());
-                }
-                ret = s;
-            }
-        }
-
-        Ok(ret)
+        self.streams.find_spec_by_name(name)
     }
 
     pub fn root_dir(&self) -> &PathBuf {
         &self.dir
     }
 
-    pub fn active_spec(&self) -> Option<&ActiveSpec> {
-        self.active_spec.as_ref()
-    }
-
-    pub fn active_spec_status(&self) -> ConfigActiveSpecStatus {
-        // TODO: pull out of here, can't handle NoYbEnv
-        match self.active_spec() {
-            None => ConfigActiveSpecStatus::NoActiveSpec,
-            Some(active_spec) => ConfigActiveSpecStatus::ActiveSpec {
-                name: active_spec.name(),
-            },
-        }
+    pub fn active_spec_status(&self) -> Option<&ActiveSpecStatus> {
+        self.active_spec_status.as_ref()
     }
 
     pub fn build_dir(&self) -> PathBuf {
@@ -174,7 +159,7 @@ impl<'arena> YbEnv<'arena> {
         let streams_dir = yb_dir.join(STREAMS_SUBDIR);
         fs::create_dir(streams_dir)?;
 
-        Ok(YbEnv::new(yb_dir, conf, None, HashMap::new(), arena))
+        Ok(YbEnv::new(yb_dir, conf, None, StreamDb::new(), arena))
     }
 }
 
@@ -199,77 +184,30 @@ pub fn try_discover_yb_env<S: AsRef<Path>>(
 
         let conf: YbConf = serde_yaml::from_slice(config_file_data.as_slice()).unwrap();
 
-        let mut active_spec;
-        let active_spec_file_path = yb_dir.join(ACTIVE_SPEC_FILE);
-        if active_spec_file_path.is_file() {
-            let active_spec_file = File::open(&active_spec_file_path)?;
-            active_spec = Some(
-                serde_yaml::from_reader::<_, ActiveSpec>(active_spec_file)
-                    .with_context(|| {
-                        format!(
-                            "failed to parse active spec file {}",
-                            &active_spec_file_path.display()
-                        )
-                    })?,
-            );
-        } else {
-            active_spec = None;
-        }
-
-        let mut streams_by_name = HashMap::new();
+        let mut stream_db = StreamDb::new();
 
         let streams_dir = yb_dir.join(STREAMS_SUBDIR);
         if streams_dir.is_dir() {
-            // Iterate over each stream (which are subdirectories)
-            for d in WalkDir::new(streams_dir)
-                .max_depth(1)
-                .min_depth(1)
-                .into_iter()
-                .filter_entry(|e| !is_hidden(e))
-                .filter(|e| e.as_ref().unwrap().file_type().is_dir())
-            {
-                let stream_path = d?.into_path();
-                let stream = Stream::load(stream_path.clone())?;
-                streams_by_name.insert(
-                    stream_path
-                        .file_name()
-                        .unwrap()
-                        .to_str()
-                        .unwrap()
-                        .to_string(),
-                    stream,
-                );
+            stream_db.load_all(streams_dir)?;
+        }
+
+        let active_spec;
+        if stream_db.has_broken() {
+            active_spec = Some(ActiveSpecStatus::StreamBroken);
+        } else {
+            let active_spec_file_path = yb_dir.join(ACTIVE_SPEC_FILE);
+            if active_spec_file_path.is_file() {
+                active_spec = Some(ActiveSpecStatus::Active(stream_db.load_active_spec(active_spec_file_path)?));
+            } else {
+                active_spec = None;
             }
-
-            if let Some(active_spec) = &mut active_spec {
-                if let Some(stream) = streams_by_name.get(&*active_spec.from_stream) {
-                    if stream.get_spec_by_name(active_spec.name()).is_none() {
-                        eyre::bail!("active spec '{}' claims to be a member of stream '{}', but it was not found there", active_spec.name(), active_spec.from_stream);
-                    }
-
-                    active_spec.weak_stream = Arc::downgrade(stream);
-                } else {
-                    eyre::bail!(
-                        "active spec '{}' refers to non-existent stream '{}'",
-                        active_spec.name(),
-                        active_spec.from_stream
-                    );
-                }
-            }
-
-            // TODO ensure the spec is actually contained in the stream it says it is
-        } else if let Some(active_spec) = &active_spec {
-            eyre::bail!(
-                "spec '{}' is active, but there are no streams?",
-                active_spec.name()
-            );
         }
 
         return Ok(YbEnv::new(
             yb_dir,
             conf,
             active_spec,
-            streams_by_name,
+            stream_db,
             arena,
         ));
     }).transpose()
