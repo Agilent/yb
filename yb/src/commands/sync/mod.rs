@@ -26,6 +26,7 @@ use crate::ui_ops::update_stream::{ui_op_update_stream, UiUpdateStreamOptions};
 use crate::util::git;
 use crate::util::indicatif::MultiProgressHelpers;
 use concurrent_git_pool::PoolHelper;
+use crate::ui_ops::check_broken_streams::{ui_op_check_broken_streams, UiCheckBrokenStreamsOptions};
 
 mod actions;
 
@@ -50,6 +51,8 @@ pub struct SyncCommand {
 #[async_trait]
 impl SubcommandRunner for SyncCommand {
     async fn run(&self, config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
+        ui_op_check_broken_streams(UiCheckBrokenStreamsOptions::new(config, mp))?;
+
         let arena = toolshed::Arena::new();
 
         let mut yb_env = require_yb_env(config, &arena)?;

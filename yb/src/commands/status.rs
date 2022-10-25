@@ -102,8 +102,7 @@ lazy_static! {
 #[async_trait]
 impl SubcommandRunner for StatusCommand {
     async fn run(&self, config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
-        let check_broken_streams_opts = UiCheckBrokenStreamsOptions::new(config, mp);
-        ui_op_check_broken_streams(check_broken_streams_opts)?;
+        ui_op_check_broken_streams(UiCheckBrokenStreamsOptions::new(config, mp))?;
 
         // Check the stream (if active) for updates
         let update_stream_opts = UiUpdateStreamOptions::new(config, mp);

@@ -5,6 +5,7 @@ use crate::commands::SubcommandRunner;
 use crate::config::Config;
 use crate::core::tool_context::require_yb_env;
 use crate::errors::YbResult;
+use crate::ui_ops::check_broken_streams::{ui_op_check_broken_streams, UiCheckBrokenStreamsOptions};
 use crate::util::indicatif::MultiProgressHelpers;
 use crate::yb_env::YbEnv;
 
@@ -18,6 +19,8 @@ pub struct ActivateCommand {
 #[async_trait]
 impl SubcommandRunner for ActivateCommand {
     async fn run(&self, config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
+        ui_op_check_broken_streams(UiCheckBrokenStreamsOptions::new(config, mp))?;
+
         let arena = toolshed::Arena::new();
         let mut yb_env = require_yb_env(config, &arena)?;
 
