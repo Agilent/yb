@@ -85,8 +85,10 @@ fn format_upstream_status_message(branch_status: &BranchStatus) -> Option<Upstre
     })
 }
 
+use crate::ui_ops::check_broken_streams::{
+    ui_op_check_broken_streams, UiCheckBrokenStreamsOptions,
+};
 use lazy_static::lazy_static;
-use crate::ui_ops::check_broken_streams::{ui_op_check_broken_streams, UiCheckBrokenStreamsOptions};
 
 lazy_static! {
     pub static ref SPINNER_STRINGS: Vec<String> = {

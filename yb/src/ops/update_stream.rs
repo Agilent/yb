@@ -58,7 +58,9 @@ where
         }
 
         if is_active_stream {
-            if let ActiveSpecStatus::Active(active_spec) = yb_env.active_spec_status().cloned().unwrap() {
+            if let ActiveSpecStatus::Active(active_spec) =
+                yb_env.active_spec_status().cloned().unwrap()
+            {
                 let stream = yb_env.stream_db().stream(stream_key).unwrap();
                 let reloaded_spec = stream.get_spec_by_name(active_spec.spec.name()).unwrap();
                 if *reloaded_spec != active_spec.spec {

@@ -22,11 +22,13 @@ use crate::data_model::git::{
 use crate::data_model::status::{ComputedStatusEntry, CorrespondingSpecRepoStatus};
 use crate::errors::YbResult;
 use crate::status_calculator::{compute_status, StatusCalculatorEvent, StatusCalculatorOptions};
+use crate::ui_ops::check_broken_streams::{
+    ui_op_check_broken_streams, UiCheckBrokenStreamsOptions,
+};
 use crate::ui_ops::update_stream::{ui_op_update_stream, UiUpdateStreamOptions};
 use crate::util::git;
 use crate::util::indicatif::MultiProgressHelpers;
 use concurrent_git_pool::PoolHelper;
-use crate::ui_ops::check_broken_streams::{ui_op_check_broken_streams, UiCheckBrokenStreamsOptions};
 
 mod actions;
 

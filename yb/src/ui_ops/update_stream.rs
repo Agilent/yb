@@ -64,7 +64,9 @@ pub fn ui_op_update_stream(options: UiUpdateStreamOptions) -> YbResult<()> {
             streams = hashset! { active_spec.stream_key };
         }
         Some(ActiveSpecStatus::StreamsBroken(broken)) => {
-            options.mp.note("one or more streams are broken; will update them all");
+            options
+                .mp
+                .note("one or more streams are broken; will update them all");
             streams = broken.keys().copied().collect();
         }
         None => {

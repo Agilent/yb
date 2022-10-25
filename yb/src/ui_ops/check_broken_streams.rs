@@ -1,12 +1,12 @@
 use crate::core::tool_context::maybe_yb_env;
 use crate::errors::YbResult;
+use crate::ops::update_stream::{op_update_stream, UpdateStreamOptions};
 use crate::util::indicatif::MultiProgressHelpers;
 use crate::yb_env::ActiveSpecStatus;
 use crate::Config;
 use dialoguer::Confirm;
 use indicatif::MultiProgress;
 use maplit::hashset;
-use crate::ops::update_stream::{op_update_stream, UpdateStreamOptions};
 
 #[derive(Debug)]
 pub struct UiCheckBrokenStreamsOptions<'cfg> {
@@ -66,8 +66,9 @@ pub fn ui_op_check_broken_streams(options: UiCheckBrokenStreamsOptions) -> YbRes
             return Ok(());
         }
 
-        let update_opts = UpdateStreamOptions::new(options.config, broken.keys().cloned().collect());
-        op_update_stream(update_opts, |event| { })?;
+        let update_opts =
+            UpdateStreamOptions::new(options.config, broken.keys().cloned().collect());
+        op_update_stream(update_opts, |event| {})?;
     } else {
         return Ok(());
     }
