@@ -54,17 +54,18 @@ pub fn ui_op_update_stream(options: UiUpdateStreamOptions) -> YbResult<()> {
     };
 
     let active_spec_status = yb_env.active_spec_status();
-    let stream;
+    let streams;
     match &active_spec_status {
         Some(ActiveSpecStatus::Active(active_spec)) => {
             options
                 .mp
                 .note(&format!("active spec: {}", active_spec.spec.name()));
 
-            stream = active_spec.stream_key;
+            streams = hashset! { active_spec.stream_key };
         }
-        Some(ActiveSpecStatus::StreamsBroken(..)) => {
-            unreachable!();
+        Some(ActiveSpecStatus::StreamsBroken(broken)) => {
+            options.mp.note("one or more streams are broken; will update them all");
+            streams = broken.keys().copied().collect();
         }
         None => {
             options
@@ -74,7 +75,7 @@ pub fn ui_op_update_stream(options: UiUpdateStreamOptions) -> YbResult<()> {
         }
     }
 
-    let update_opts = UpdateStreamOptions::new(options.config, hashset! {stream});
+    let update_opts = UpdateStreamOptions::new(options.config, streams);
 
     // TODO report result in porcelain
 
