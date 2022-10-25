@@ -16,12 +16,17 @@ impl SubcommandRunner for ListCommand {
         let arena = toolshed::Arena::new();
         let yb_env = require_yb_env(config, &arena)?;
 
-        // for stream in yb_env.stream_db().streams() {
-        //     println!("{}:", stream.1.name());
-        //     for spec in stream.1.specs_by_name() {
-        //         println!("\t{}", spec.0);
-        //     }
-        // }
+        for stream in yb_env.stream_db().streams() {
+            println!("{}:", stream.1.name());
+
+            if let Some(reason) = &stream.1.broken_reason() {
+                println!("\tstream is broken: {:?}", reason);
+            } else {
+                for spec in stream.1.specs() {
+                    println!("\t{}", spec.0);
+                }
+            }
+        }
 
         Ok(())
     }
