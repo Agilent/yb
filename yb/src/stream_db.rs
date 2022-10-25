@@ -1,12 +1,14 @@
-use std::fs::File;
-use std::path::{Path, PathBuf};
-use eyre::Context;
-use slotmap::{new_key_type, SlotMap};
-use walkdir::WalkDir;
 use crate::errors::YbResult;
 use crate::spec::{ActiveSpec, Spec};
 use crate::stream::Stream;
 use crate::util::paths::is_hidden;
+use eyre::Context;
+use slotmap::{new_key_type, SlotMap};
+use std::collections::HashMap;
+use std::fs::File;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use walkdir::WalkDir;
 
 new_key_type! {
     pub struct StreamKey;
@@ -19,7 +21,9 @@ pub struct StreamDb {
 
 impl StreamDb {
     pub fn new() -> Self {
-        Self { streams: SlotMap::with_key() }
+        Self {
+            streams: SlotMap::with_key(),
+        }
     }
 
     pub fn streams(&self) -> slotmap::basic::Iter<'_, StreamKey, Stream> {
@@ -32,6 +36,19 @@ impl StreamDb {
 
     pub fn has_broken(&self) -> bool {
         self.streams.iter().any(|stream| stream.1.is_broken())
+    }
+
+    pub fn broken_streams(&self) -> HashMap<StreamKey, Arc<eyre::Report>> {
+        self.streams
+            .iter()
+            .filter_map(|stream| {
+                if let Some(reason) = stream.1.broken_reason() {
+                    Some((stream.0, reason))
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
 
     pub fn load_all<P: AsRef<Path>>(&mut self, streams_dir: P) -> YbResult<()> {
@@ -61,7 +78,10 @@ impl StreamDb {
 
     pub fn get_stream_by_name<N: AsRef<str>>(&self, name: N) -> Option<&Stream> {
         let name = name.as_ref();
-        self.streams.iter().find(|stream| stream.1.name() == name).map(|item| item.1)
+        self.streams
+            .iter()
+            .find(|stream| stream.1.name() == name)
+            .map(|item| item.1)
     }
 
     pub fn find_spec_by_name<N: AsRef<str>>(&self, name: N) -> YbResult<Option<&Spec>> {
@@ -90,14 +110,13 @@ impl StreamDb {
 
     pub fn load_active_spec(&self, active_spec_file_path: PathBuf) -> YbResult<ActiveSpec> {
         let active_spec_file = File::open(&active_spec_file_path)?;
-        let mut active_spec =
-            serde_yaml::from_reader::<_, ActiveSpec>(active_spec_file)
-                .with_context(|| {
-                    format!(
-                        "failed to parse active spec file {}",
-                        &active_spec_file_path.display()
-                    )
-                })?;
+        let mut active_spec = serde_yaml::from_reader::<_, ActiveSpec>(active_spec_file)
+            .with_context(|| {
+                format!(
+                    "failed to parse active spec file {}",
+                    &active_spec_file_path.display()
+                )
+            })?;
 
         if let Some(stream) = self.get_stream_by_name(&active_spec.from_stream) {
             if stream.get_spec_by_name(active_spec.name()).is_none() {
@@ -107,10 +126,10 @@ impl StreamDb {
             active_spec.stream_key = stream.key();
         } else {
             eyre::bail!(
-                        "active spec '{}' refers to non-existent stream '{}'",
-                        active_spec.name(),
-                        active_spec.from_stream
-                    );
+                "active spec '{}' refers to non-existent stream '{}'",
+                active_spec.name(),
+                active_spec.from_stream
+            );
         }
 
         Ok(active_spec)

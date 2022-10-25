@@ -1,17 +1,19 @@
 use core::fmt::{self, Debug, Formatter};
 use eyre::Context;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::Read;
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use crate::core::tool_context::YoctoEnvironment;
 use crate::errors::YbResult;
 use crate::spec::{ActiveSpec, Spec};
-use crate::stream::{Stream};
+use crate::stream::Stream;
 use crate::stream_db::{StreamDb, StreamKey};
-use crate::util::paths::{find_dir_recurse_upwards};
+use crate::util::paths::find_dir_recurse_upwards;
 use crate::yb_conf::YbConf;
 
 const YB_ENV_DIRECTORY: &str = ".yb";
@@ -19,17 +21,10 @@ const STREAMS_SUBDIR: &str = "streams";
 const YB_CONF_FILE: &str = "yb.yaml";
 const ACTIVE_SPEC_FILE: &str = "active_spec.yaml";
 
-
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ActiveSpecStatus {
     Active(ActiveSpec),
-    StreamBroken,
-}
-
-impl ActiveSpecStatus {
-    pub fn has_active_spec(&self) -> bool {
-        matches!(&self, ActiveSpecStatus::Active { .. })
-    }
+    StreamsBroken(HashMap<StreamKey, Arc<eyre::Report>>),
 }
 
 pub struct YbEnv<'arena> {
@@ -94,12 +89,9 @@ impl<'arena> YbEnv<'arena> {
     }
 
     pub fn active_stream_mut(&mut self) -> Option<&mut Stream> {
-        let key = self.active_spec_status
-            .as_ref().and_then(|a| {
-            match a {
-                ActiveSpecStatus::Active(spec) => Some(spec.stream_key),
-                _ => None,
-            }
+        let key = self.active_spec_status.as_ref().and_then(|a| match a {
+            ActiveSpecStatus::Active(spec) => Some(spec.stream_key),
+            _ => None,
         });
 
         key.and_then(move |k| self.streams.stream_mut(k))
@@ -169,46 +161,44 @@ pub fn try_discover_yb_env<S: AsRef<Path>>(
     arena: &toolshed::Arena,
 ) -> YbResult<Option<YbEnv>> {
     // Locate the hidden .yb directory
-    find_dir_recurse_upwards(start_point, YB_ENV_DIRECTORY)?.map(|yb_dir| -> YbResult<_> {
-        tracing::info!("found .yb directory at {:?}", yb_dir);
-        let conf_file = yb_dir.join(YB_CONF_FILE);
-        // TODO handle missing conf file?
-        assert!(conf_file.is_file());
+    find_dir_recurse_upwards(start_point, YB_ENV_DIRECTORY)?
+        .map(|yb_dir| -> YbResult<_> {
+            tracing::info!("found .yb directory at {:?}", yb_dir);
+            let conf_file = yb_dir.join(YB_CONF_FILE);
+            // TODO handle missing conf file?
+            assert!(conf_file.is_file());
 
-        let mut config_file_data = Vec::new();
-        File::open(&conf_file)
-            .with_context(|| {
-                format!("failed to open conf file {}", conf_file.display())
-            })?
-            .read_to_end(&mut config_file_data)?;
+            let mut config_file_data = Vec::new();
+            File::open(&conf_file)
+                .with_context(|| format!("failed to open conf file {}", conf_file.display()))?
+                .read_to_end(&mut config_file_data)?;
 
-        let conf: YbConf = serde_yaml::from_slice(config_file_data.as_slice()).unwrap();
+            let conf: YbConf = serde_yaml::from_slice(config_file_data.as_slice()).unwrap();
 
-        let mut stream_db = StreamDb::new();
+            let mut stream_db = StreamDb::new();
 
-        let streams_dir = yb_dir.join(STREAMS_SUBDIR);
-        if streams_dir.is_dir() {
-            stream_db.load_all(streams_dir)?;
-        }
-
-        let active_spec;
-        if stream_db.has_broken() {
-            active_spec = Some(ActiveSpecStatus::StreamBroken);
-        } else {
-            let active_spec_file_path = yb_dir.join(ACTIVE_SPEC_FILE);
-            if active_spec_file_path.is_file() {
-                active_spec = Some(ActiveSpecStatus::Active(stream_db.load_active_spec(active_spec_file_path)?));
-            } else {
-                active_spec = None;
+            let streams_dir = yb_dir.join(STREAMS_SUBDIR);
+            if streams_dir.is_dir() {
+                stream_db.load_all(streams_dir)?;
             }
-        }
 
-        return Ok(YbEnv::new(
-            yb_dir,
-            conf,
-            active_spec,
-            stream_db,
-            arena,
-        ));
-    }).transpose()
+            let active_spec;
+            let broken_streams = stream_db.broken_streams();
+            if !broken_streams.is_empty() {
+                // TODO: active spec is not necessarily part of broken stream(s); could still try to load it
+                active_spec = Some(ActiveSpecStatus::StreamsBroken(broken_streams));
+            } else {
+                let active_spec_file_path = yb_dir.join(ACTIVE_SPEC_FILE);
+                if active_spec_file_path.is_file() {
+                    active_spec = Some(ActiveSpecStatus::Active(
+                        stream_db.load_active_spec(active_spec_file_path)?,
+                    ));
+                } else {
+                    active_spec = None;
+                }
+            }
+
+            return Ok(YbEnv::new(yb_dir, conf, active_spec, stream_db, arena));
+        })
+        .transpose()
 }

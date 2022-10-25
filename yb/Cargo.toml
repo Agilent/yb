@@ -19,6 +19,7 @@ clap = { version = "3", features = ["derive"] }
 color-eyre = { git = "https://github.com/chris-laplante/color-eyre.git", branch = "cpl/suppress_backtrace" }
 console = "0.15.0"
 coredump = "0.1.1"
+dialoguer = "0.10"
 enum_dispatch = "0.3.8"
 eyre = "0.6"
 futures = "0.3.23"

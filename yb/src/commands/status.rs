@@ -86,6 +86,7 @@ fn format_upstream_status_message(branch_status: &BranchStatus) -> Option<Upstre
 }
 
 use lazy_static::lazy_static;
+use crate::ui_ops::check_broken_streams::{ui_op_check_broken_streams, UiCheckBrokenStreamsOptions};
 
 lazy_static! {
     pub static ref SPINNER_STRINGS: Vec<String> = {
@@ -101,16 +102,15 @@ lazy_static! {
 #[async_trait]
 impl SubcommandRunner for StatusCommand {
     async fn run(&self, config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
+        let check_broken_streams_opts = UiCheckBrokenStreamsOptions::new(config, mp);
+        ui_op_check_broken_streams(check_broken_streams_opts)?;
+
         // Check the stream (if active) for updates
         let update_stream_opts = UiUpdateStreamOptions::new(config, mp);
         ui_op_update_stream(update_stream_opts)?;
 
         let status_calculator_options =
             StatusCalculatorOptions::new(config, self.flag_no_fetch, self.flag_log);
-        if !config.porcelain {
-            // TODO
-            //status_calculator_options.callbacks(status_callbacks);
-        }
 
         let mut overall_progress: Option<ProgressBar> = None;
         let mut subdir_spinner: Option<ProgressBar> = None;

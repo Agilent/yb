@@ -1,10 +1,11 @@
+use crate::data_model::Layer;
+use color_eyre::Help;
 use eyre::Report;
+use itertools::Itertools;
+use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::path::{Path, PathBuf};
-use crate::data_model::Layer;
-use itertools::Itertools;
-use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::errors::YbResult;
 use crate::stream_db::StreamKey;
@@ -52,11 +53,12 @@ impl Spec {
 
         for (url, repo_names) in urls_to_repos {
             if repo_names.len() > 1 {
-                eyre::bail!(
+                return Err(eyre::eyre!(
                     "URL {} corresponds to more than one spec repo: {}",
                     url,
                     repo_names.into_iter().join(", ")
-                );
+                )
+                .suppress_backtrace(true));
             }
         }
 

@@ -55,6 +55,8 @@ impl SubcommandRunner for SyncCommand {
         let mut yb_env = require_yb_env(config, &arena)?;
 
         if let Some(spec_name) = &self.spec {
+            // TODO: don't immediately activate. Use current spec and desired spec to better calculate
+            // what needs to be done.
             activate_spec(&mut yb_env, spec_name)?;
         }
 

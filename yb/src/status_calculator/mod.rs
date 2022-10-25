@@ -247,7 +247,7 @@ where
     // What is left is the set of missing spec repos.
     let mut active_spec_repos = active_spec_maybe
         .map(|s| match s {
-            ActiveSpecStatus::StreamBroken => unimplemented!(),
+            ActiveSpecStatus::StreamsBroken(..) => unimplemented!(),
             ActiveSpecStatus::Active(active_spec) => active_spec.spec.repos.clone(),
         })
         .unwrap_or_default();
@@ -298,7 +298,7 @@ where
         enabled_layers: bblayers,
         missing_repos,
         active_spec: active_spec_maybe.map(|status| match status {
-            ActiveSpecStatus::StreamBroken => unimplemented!(),
+            ActiveSpecStatus::StreamsBroken(..) => unimplemented!(),
             ActiveSpecStatus::Active(active_spec) => active_spec.clone(),
         }),
         bblayers_path: context.build_dir().join("conf").join("bblayers.conf"),

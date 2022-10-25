@@ -1,5 +1,5 @@
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
-
+use maplit::hashset;
 use std::time::Duration;
 
 use crate::config::Config;
@@ -54,19 +54,27 @@ pub fn ui_op_update_stream(options: UiUpdateStreamOptions) -> YbResult<()> {
     };
 
     let active_spec_status = yb_env.active_spec_status();
+    let stream;
     match &active_spec_status {
         Some(ActiveSpecStatus::Active(active_spec)) => {
-            options.mp.note(&format!("active spec: {}", active_spec.spec.name()))
+            options
+                .mp
+                .note(&format!("active spec: {}", active_spec.spec.name()));
+
+            stream = active_spec.stream_key;
         }
-        Some(ActiveSpecStatus::StreamBroken) => {
-            unimplemented!();
+        Some(ActiveSpecStatus::StreamsBroken(..)) => {
+            unreachable!();
         }
-        None => options
-            .mp
-            .note("no active spec; consider using the 'yb activate' command"),
+        None => {
+            options
+                .mp
+                .note("no active spec; consider using the 'yb activate' command");
+            return Ok(());
+        }
     }
 
-    let update_opts = UpdateStreamOptions::new(options.config);
+    let update_opts = UpdateStreamOptions::new(options.config, hashset! {stream});
 
     // TODO report result in porcelain
 
@@ -81,22 +89,14 @@ pub fn ui_op_update_stream(options: UiUpdateStreamOptions) -> YbResult<()> {
                 ),
             );
         }
-        UpdateStreamEvent::ActiveStreamUpdated => {
-            stream_update_spinner
-                .as_ref()
-                .unwrap()
-                .set_style(ProgressStyle::with_template("{msg}: stream updated").unwrap());
-        }
         UpdateStreamEvent::ActiveSpecUpdated => {
             options
                 .mp
                 .note("active spec changed - reloading environment");
         }
-        UpdateStreamEvent::Finish(s) => {
-            if !s.stream_updated {
-                if let Some(stream_update_spinner) = stream_update_spinner.as_ref() {
-                    stream_update_spinner.finish_and_clear();
-                }
+        UpdateStreamEvent::Finish(..) => {
+            if let Some(stream_update_spinner) = stream_update_spinner.as_ref() {
+                stream_update_spinner.finish_and_clear();
             }
         }
     })?;

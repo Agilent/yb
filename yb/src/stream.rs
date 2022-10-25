@@ -84,14 +84,13 @@ impl Stream {
         let stream_contents_dir = path.join(STREAM_CONTENT_ROOT_SUBDIR);
         let repo = Repository::discover(&stream_contents_dir)?;
 
-        Ok(
-            Stream {
-                path,
-                name,
-                specs: Self::load_specs(stream_contents_dir, stream_key)?,
-                repo: Mutex::new(repo),
-                config,
-                key: stream_key,
+        Ok(Stream {
+            path,
+            name,
+            specs: Self::load_specs(stream_contents_dir, stream_key)?,
+            repo: Mutex::new(repo),
+            config,
+            key: stream_key,
         })
     }
 
@@ -105,11 +104,14 @@ impl Stream {
             .filter(|e| is_yaml_file(e.as_ref().unwrap()))
         {
             let spec_path = spec_yaml?.into_path();
-            if let Ok(spec) = Spec::load(&spec_path, stream_key) {
-                specs.insert(spec.name(), spec);
-            } else {
-                // Error encountered while loading spec
-                return Ok(StreamSpecs::Broken);
+            match Spec::load(&spec_path, stream_key) {
+                Ok(spec) => {
+                    specs.insert(spec.name(), spec);
+                }
+                Err(e) => {
+                    // Error encountered while loading spec
+                    return Ok(StreamSpecs::Broken(Arc::new(e)));
+                }
             }
         }
 
@@ -148,7 +150,7 @@ impl Stream {
     pub fn get_spec_by_name<S: AsRef<str>>(&self, name: S) -> Option<&Spec> {
         match &self.specs {
             StreamSpecs::Loaded(specs) => specs.get(name.as_ref()),
-            StreamSpecs::Broken => None,
+            StreamSpecs::Broken(..) => None,
         }
     }
 
@@ -161,13 +163,19 @@ impl Stream {
     }
 
     pub fn is_broken(&self) -> bool {
-        matches!(self.specs, StreamSpecs::Broken)
+        matches!(self.specs, StreamSpecs::Broken(..))
+    }
+
+    pub fn broken_reason(&self) -> Option<Arc<eyre::Report>> {
+        match &self.specs {
+            StreamSpecs::Loaded(..) => None,
+            StreamSpecs::Broken(e) => Some(e.clone()),
+        }
     }
 }
-
 
 #[derive(Debug)]
 pub enum StreamSpecs {
     Loaded(HashMap<String, Spec>),
-    Broken,
+    Broken(Arc<eyre::Report>),
 }
