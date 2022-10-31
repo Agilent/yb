@@ -350,8 +350,15 @@ pub fn find_corresponding_spec_repo_for_repo(
                     },
                 )));
             }
+        }
 
-            // Consider extra remotes
+        // Consider extra remotes
+        for (remote_name, remote_url) in &remote_names_with_urls {
+            let tracking_branch = RemoteTrackingBranch {
+                branch_name: spec_repo.refspec.clone(),
+                remote_name: remote_name.clone(),
+            };
+
             if spec_repo
                 .extra_remotes
                 .iter()
