@@ -17,9 +17,6 @@ pub struct YbOptions {
 
     #[clap(subcommand)]
     pub command: Subcommands,
-
-    #[clap(long, global = true)]
-    pub git_cache_socket: Option<String>,
 }
 
 #[derive(clap::ValueEnum, Clone, Debug, Copy)]
