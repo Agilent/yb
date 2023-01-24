@@ -178,7 +178,6 @@ What's working:
 * Everything described above, plus a few other utility commands (e.g. `yb list` to view specs and streams)
 
 TODO:
-- [ ] Reconstitute the auto-update feature deployed internally
 - [ ] Support modifications to local.conf in specs
 - [ ] Some kind of matrix build support (multiple MACHINE/DISTRO/?)
 - [ ] Usage in CI environment
@@ -204,7 +203,7 @@ Basically because [this](https://xkcd.com/1987/). Rust lets you build statically
 
 License
 ========
-Copyright 2022 Agilent Technologies, Inc.
+Copyright 2022-2023 Agilent Technologies, Inc.
 
 This software is licensed under the MIT license.
 
