@@ -77,10 +77,10 @@ A vanilla Yocto env is one in which you haven't (yet) used `yb init` to initiali
 
 ## Converting vanilla Yocto env to yb env
 
-To do the conversion, simply activate your Yocto env as usual and then run `yb init`:
+To do the conversion, simply activate your Yocto env as usual and then run `yb upgrade`:
 
 1. `source setupsdk` or `source oe-init-build-env`
-2. `yb init` (or `yb init -s PATH_TO_STREAM`)
+2. `yb upgrade` (or `yb upgrade -s PATH_TO_STREAM`)
 3. Try running `yb status`
 
 For a demo stream you can use right now, see https://github.com/Agilent/yb-demo-specs.
@@ -98,6 +98,28 @@ Note that even if you pass a stream to `yb init`, no layers are cloned yet. You'
 For a demo stream you can use right now, see https://github.com/Agilent/yb-demo-specs.
 
 # Commands
+
+## `yb self-update`: check GitHub for latest release
+
+This command checks GitHub for the latest release of yb. If a new release is found it is automatically downloaded.
+
+```bash
+yb self-update
+```
+
+## `yb init`: create a new yb env
+| Vanilla Yocto env | yb env |
+| ------------- | ------------- |
+| :x:  | :x:  |
+
+See https://github.com/Agilent/yb#creating-a-new-yb-env-from-scratch
+
+## `yb upgrade`: convert vanilla Yocto env to a yb env
+| Vanilla Yocto env | yb env |
+| ------------- | ------------- |
+| :heavy_check_mark:  | :x:  |
+
+See https://github.com/Agilent/yb#converting-vanilla-yocto-env-to-yb-env
 
 ## `yb activate`: set the active spec
 | Vanilla Yocto env | yb env |
