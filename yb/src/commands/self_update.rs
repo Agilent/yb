@@ -15,20 +15,25 @@ pub struct SelfUpdateCommand {}
 #[async_trait]
 impl SubcommandRunner for SelfUpdateCommand {
     async fn run(&self, _config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
-        let status = self_update::backends::github::Update::configure()
-            .repo_owner("Agilent")
-            .repo_name("yb")
-            .bin_name("yb")
-            .show_download_progress(true)
-            .current_version(cargo_crate_version!())
-            .build()?
-            .update()?;
+        let mp = mp.clone();
+        tokio::task::spawn_blocking(move || {
+            let status = self_update::backends::github::Update::configure()
+                .repo_owner("Agilent")
+                .repo_name("yb")
+                .bin_name("yb")
+                .show_download_progress(true)
+                .current_version(cargo_crate_version!())
+                .build()?
+                .update()?;
 
-        match status {
-            Status::UpToDate(v) => mp.note(format!("Version {v} is up-to-date!")),
-            Status::Updated(v) => mp.note(format!("Updated to version {v}")),
-        }
+            match status {
+                Status::UpToDate(v) => mp.note(format!("Version {v} is up-to-date!")),
+                Status::Updated(v) => mp.note(format!("Updated to version {v}")),
+            }
 
-        Ok(())
+            Ok(())
+        })
+        .await
+        .unwrap()
     }
 }
