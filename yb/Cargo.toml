@@ -25,7 +25,7 @@ enum_dispatch = "0.3.8"
 eyre = "0.6"
 futures = "0.3.23"
 git2 = "0.16.1"
-indicatif = { version = "0.17.1", features = ["improved_unicode"] }
+indicatif = { version = "0.17.3", features = ["improved_unicode"] }
 itertools = "0.10.3"
 lazy_static = "1"
 libc = "0.2.126"
