@@ -1,6 +1,6 @@
 use core::fmt::{self, Debug, Formatter};
 use eyre::Context;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::Read;

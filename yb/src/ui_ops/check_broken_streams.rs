@@ -6,7 +6,6 @@ use crate::yb_env::ActiveSpecStatus;
 use crate::Config;
 use dialoguer::Confirm;
 use indicatif::MultiProgress;
-use maplit::hashset;
 
 #[derive(Debug)]
 pub struct UiCheckBrokenStreamsOptions<'cfg> {
@@ -68,7 +67,7 @@ pub fn ui_op_check_broken_streams(options: UiCheckBrokenStreamsOptions) -> YbRes
 
         let update_opts =
             UpdateStreamOptions::new(options.config, broken.keys().cloned().collect());
-        op_update_stream(update_opts, |event| {})?;
+        op_update_stream(update_opts, |_| {})?;
     } else {
         return Ok(());
     }

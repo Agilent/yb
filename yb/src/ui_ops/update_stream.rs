@@ -1,4 +1,4 @@
-use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use indicatif::{MultiProgress, ProgressBar};
 use maplit::hashset;
 use std::time::Duration;
 

@@ -2,7 +2,6 @@ use core::fmt;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
 use std::path::{Path, PathBuf};
-use std::process::{Stdio};
 use assert_cmd::Command;
 
 use crate::data_model::git::{
