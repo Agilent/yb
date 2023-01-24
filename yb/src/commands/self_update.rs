@@ -25,8 +25,8 @@ impl SubcommandRunner for SelfUpdateCommand {
             .update()?;
 
         match status {
-            Status::UpToDate(v) => mp.note(format!("Version {} is up-to-date!", v)),
-            Status::Updated(v) => mp.note(format!("Updated to version {}", v)),
+            Status::UpToDate(v) => mp.note(format!("Version {v} is up-to-date!")),
+            Status::Updated(v) => mp.note(format!("Updated to version {v}")),
         }
 
         Ok(())

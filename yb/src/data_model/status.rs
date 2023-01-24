@@ -208,7 +208,6 @@ pub fn find_local_branches_tracking_remote_branch(
 ) -> YbResult<Vec<LocalTrackingBranchWithUpstreamComparison>> {
     let branches: YbResult<Vec<Branch>> = repo
         .branches(Some(BranchType::Local))?
-        .into_iter()
         .map(|branch| -> YbResult<_> { Ok(branch?.0) })
         .collect();
 

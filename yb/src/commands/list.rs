@@ -20,7 +20,7 @@ impl SubcommandRunner for ListCommand {
             println!("{}:", stream.1.name());
 
             if let Some(reason) = &stream.1.broken_reason() {
-                println!("\tstream is broken: {:?}", reason);
+                println!("\tstream is broken: {reason:?}");
             } else {
                 for spec in stream.1.specs() {
                     println!("\t{}", spec.0);

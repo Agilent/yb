@@ -97,7 +97,7 @@ impl SubcommandRunner for SyncCommand {
             StatusCalculatorEvent::StartProcessSubdir { dirname } => overall_progress
                 .as_ref()
                 .unwrap()
-                .set_message(format!("checking {}", dirname)),
+                .set_message(format!("checking {dirname}")),
             StatusCalculatorEvent::FinishProcessSubdir => overall_progress.as_ref().unwrap().inc(1),
             _ => {}
         })?;
@@ -149,7 +149,7 @@ impl SubcommandRunner for SyncCommand {
                                     }
                                     UpstreamComparison::Ahead(_) => {
                                         let msg = format!("{} is ahead of remote and I don't know what to do about it", status_data.path.display());
-                                        mp.error(&msg);
+                                        mp.error(msg);
                                         panic!();
                                     }
                                     UpstreamComparison::Diverged { .. } => unimplemented!(),
@@ -254,7 +254,7 @@ impl SubcommandRunner for SyncCommand {
 
         // TODO backup bblayers.conf before apply
 
-        println!("actions: {:#?}", sync_actions);
+        println!("actions: {sync_actions:#?}");
 
         if self.apply {
             if sync_actions.iter().any(|action| action.is_force_required()) && !self.force {
@@ -295,7 +295,7 @@ fn determine_local_branch_name_for_checkout(
 
     // TODO smarter way
     for i in 2..10 {
-        let next_try = format!("{}-{}", local_branch_name, i);
+        let next_try = format!("{local_branch_name}-{i}");
         if !git::local_branch_exists(repo, &next_try)? {
             return Ok(next_try);
         }

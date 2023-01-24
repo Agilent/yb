@@ -12,7 +12,7 @@ pub enum ServiceError {
 
 impl From<io::Error> for ServiceError {
     fn from(e: io::Error) -> Self {
-        Self::IoError(format!("{}", e))
+        Self::IoError(format!("{e}"))
     }
 }
 

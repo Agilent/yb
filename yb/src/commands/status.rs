@@ -62,20 +62,18 @@ fn format_upstream_status_message(branch_status: &BranchStatus) -> Option<Upstre
         UpstreamComparison::Behind(behind) => {
             branch_status_color = Some(Style::from_dotted_str("yellow.bold"));
             format!(
-                "{} {} commits behind '{}'",
-                behind_symbol, behind, remote_tracking_branch_name
+                "{behind_symbol} {behind} commits behind '{remote_tracking_branch_name}'"
             )
         }
         UpstreamComparison::Ahead(ahead) => {
             branch_status_color = Some(Style::from_dotted_str("magenta.bright.bold"));
             format!(
-                "{} {} commits ahead of '{}'",
-                ahead_symbol, ahead, remote_tracking_branch_name
+                "{ahead_symbol} {ahead} commits ahead of '{remote_tracking_branch_name}'"
             )
         }
 
         UpstreamComparison::UpToDate => {
-            format!("up to date with '{}'", remote_tracking_branch_name)
+            format!("up to date with '{remote_tracking_branch_name}'")
         }
     };
 
@@ -94,7 +92,7 @@ lazy_static! {
     pub static ref SPINNER_STRINGS: Vec<String> = {
         let mut chars = "⠁⠁⠉⠙⠚⠒⠂⠂⠒⠲⠴⠤⠄⠄⠤⠠⠠⠤⠦⠖⠒⠐⠐⠒⠓⠋⠉⠈⠈"
             .chars()
-            .map(|c| format!("{} ", c))
+            .map(|c| format!("{c} "))
             .collect::<Vec<_>>();
         chars.push(String::new());
         chars

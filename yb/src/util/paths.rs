@@ -33,7 +33,6 @@ where
 
 pub fn list_subdirectories_sorted(dir: &Path) -> YbResult<Vec<PathBuf>> {
     let mut ret: Vec<PathBuf> = fs::read_dir(dir)?
-        .into_iter()
         .filter_map(|r| r.ok().map(|r| r.path()))
         .filter(|r| r.is_dir())
         .collect();

@@ -46,16 +46,14 @@ impl PoolHelper {
         let result = command.output().await;
         if let Err(e) = result {
             return Ok(Err(ServiceError::IoError(format!(
-                "failed to call status() on command: {:?}",
-                e
+                "failed to call status() on command: {e:?}"
             ))));
         }
 
         let result = result.unwrap();
         if !result.status.success() {
             return Ok(Err(ServiceError::CloneFailed(format!(
-                "exit code: {:?}",
-                result
+                "exit code: {result:?}"
             ))));
         }
 

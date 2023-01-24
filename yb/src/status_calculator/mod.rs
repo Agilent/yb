@@ -53,12 +53,12 @@ pub fn compare_branch_to_remote_tracking_branch(
     let remote_branch_name = tracking_branch.to_string();
     let ahead_count = create_revwalk(
         repo,
-        &format!("{1}..{0}", local_branch_name, remote_branch_name),
+        &format!("{remote_branch_name}..{local_branch_name}"),
     )?
     .count();
     let behind_count = create_revwalk(
         repo,
-        &format!("{0}..{1}", local_branch_name, remote_branch_name),
+        &format!("{local_branch_name}..{remote_branch_name}"),
     )?
     .count();
     Ok(match (ahead_count > 0, behind_count > 0) {
@@ -111,7 +111,6 @@ fn detect_layers<P: AsRef<Path>>(start_dir: P) -> YbResult<HashSet<Layer>> {
     } else {
         // Detect layers under the path
         layers = fs::read_dir(start_dir)?
-            .into_iter()
             .filter_map(|r| r.ok().map(|r| r.path()))
             .filter(|r| looks_like_layer_dir(r))
             .map(|path| Layer {

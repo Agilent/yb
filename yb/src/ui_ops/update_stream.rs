@@ -59,7 +59,7 @@ pub fn ui_op_update_stream(options: UiUpdateStreamOptions) -> YbResult<()> {
         Some(ActiveSpecStatus::Active(active_spec)) => {
             options
                 .mp
-                .note(&format!("active spec: {}", active_spec.spec.name()));
+                .note(format!("active spec: {}", active_spec.spec.name()));
 
             streams = hashset! { active_spec.stream_key };
         }

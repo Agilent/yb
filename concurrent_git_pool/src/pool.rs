@@ -137,7 +137,7 @@ async fn clone_repo(
 
     match status.success() {
         true => Ok(root.join(&dest_dir_name)),
-        false => Err(ServiceError::CloneFailed(format!("{}", status))),
+        false => Err(ServiceError::CloneFailed(format!("{status}"))),
     }
 }
 

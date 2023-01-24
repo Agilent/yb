@@ -42,11 +42,7 @@ impl StreamDb {
         self.streams
             .iter()
             .filter_map(|stream| {
-                if let Some(reason) = stream.1.broken_reason() {
-                    Some((stream.0, reason))
-                } else {
-                    None
-                }
+                stream.1.broken_reason().map(|reason| (stream.0, reason))
             })
             .collect()
     }

@@ -43,7 +43,7 @@ async fn real_main() -> Result<(), i32> {
     let result = parse_args_and_create_config();
     match result {
         Err(err) => {
-            eprintln!("internal error whilst setting up application: {:?}", err);
+            eprintln!("internal error whilst setting up application: {err:?}");
             return Err(1);
         }
 
@@ -54,7 +54,7 @@ async fn real_main() -> Result<(), i32> {
 
             // Run the subcommand
             if let Err(err) = opt.command.run(&mut config, &mp).await {
-                eprintln!("internal error: {:?}", err);
+                eprintln!("internal error: {err:?}");
                 return Err(1);
             }
         }

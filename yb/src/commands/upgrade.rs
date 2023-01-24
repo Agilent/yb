@@ -59,7 +59,7 @@ impl SubcommandRunner for UpgradeCommand {
                 let arena = toolshed::Arena::new();
                 let new_context = ToolContext::Yb(YbEnv::initialize(target, &context2, &arena)?);
                 match &new_context {
-                    ToolContext::Yb(yb_env) => println!("initialized yb env at {:?}", yb_env),
+                    ToolContext::Yb(yb_env) => println!("initialized yb env at {yb_env:?}"),
                     _ => panic!(""),
                 };
             }

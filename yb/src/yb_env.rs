@@ -81,7 +81,7 @@ impl<'arena> YbEnv<'arena> {
             .write(true)
             .create(true)
             .truncate(true)
-            .open(&dest)?;
+            .open(dest)?;
         serde_yaml::to_writer(&f, &active_spec)?;
 
         self.active_spec_status = Some(ActiveSpecStatus::Active(active_spec));
