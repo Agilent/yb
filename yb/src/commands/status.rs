@@ -61,15 +61,11 @@ fn format_upstream_status_message(branch_status: &BranchStatus) -> Option<Upstre
         }
         UpstreamComparison::Behind(behind) => {
             branch_status_color = Some(Style::from_dotted_str("yellow.bold"));
-            format!(
-                "{behind_symbol} {behind} commits behind '{remote_tracking_branch_name}'"
-            )
+            format!("{behind_symbol} {behind} commits behind '{remote_tracking_branch_name}'")
         }
         UpstreamComparison::Ahead(ahead) => {
             branch_status_color = Some(Style::from_dotted_str("magenta.bright.bold"));
-            format!(
-                "{ahead_symbol} {ahead} commits ahead of '{remote_tracking_branch_name}'"
-            )
+            format!("{ahead_symbol} {ahead} commits ahead of '{remote_tracking_branch_name}'")
         }
 
         UpstreamComparison::UpToDate => {

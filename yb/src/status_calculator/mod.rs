@@ -51,16 +51,10 @@ pub fn compare_branch_to_remote_tracking_branch(
     tracking_branch: &RemoteTrackingBranch,
 ) -> YbResult<UpstreamComparison> {
     let remote_branch_name = tracking_branch.to_string();
-    let ahead_count = create_revwalk(
-        repo,
-        &format!("{remote_branch_name}..{local_branch_name}"),
-    )?
-    .count();
-    let behind_count = create_revwalk(
-        repo,
-        &format!("{local_branch_name}..{remote_branch_name}"),
-    )?
-    .count();
+    let ahead_count =
+        create_revwalk(repo, &format!("{remote_branch_name}..{local_branch_name}"))?.count();
+    let behind_count =
+        create_revwalk(repo, &format!("{local_branch_name}..{remote_branch_name}"))?.count();
     Ok(match (ahead_count > 0, behind_count > 0) {
         (true, true) => UpstreamComparison::Diverged {
             ahead: ahead_count,

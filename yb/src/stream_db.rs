@@ -41,9 +41,7 @@ impl StreamDb {
     pub fn broken_streams(&self) -> HashMap<StreamKey, Arc<eyre::Report>> {
         self.streams
             .iter()
-            .filter_map(|stream| {
-                stream.1.broken_reason().map(|reason| (stream.0, reason))
-            })
+            .filter_map(|stream| stream.1.broken_reason().map(|reason| (stream.0, reason)))
             .collect()
     }
 

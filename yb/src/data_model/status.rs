@@ -1,8 +1,8 @@
+use assert_cmd::Command;
 use core::fmt;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
 use std::path::{Path, PathBuf};
-use assert_cmd::Command;
 
 use crate::data_model::git::{
     BranchStatus, LocalTrackingBranch, LocalTrackingBranchWithUpstreamComparison,
