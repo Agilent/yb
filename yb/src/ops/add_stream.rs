@@ -13,6 +13,7 @@ use crate::errors::YbResult;
 use crate::stream::{
     Stream, StreamConfig, StreamKind, STREAM_CONFIG_FILE, STREAM_CONTENT_ROOT_SUBDIR,
 };
+use crate::stream_db::StreamKey;
 use crate::util::git::ssh_agent_remote_callbacks;
 
 pub struct AddStreamOptions<'cfg> {
@@ -91,8 +92,10 @@ pub fn op_add_stream(options: AddStreamOptions) -> YbResult<()> {
         eyre::bail!("a stream with name {} already exists", &stream_name);
     }
 
-    todo!();
-    //Stream::load(PathBuf::from(tmpdir.path()))?;
+    // Just fake a key for now
+    let key = StreamKey::default();
+    // Try to load stream
+    Stream::load(PathBuf::from(tmpdir.path()), stream_name, key)?;
 
     // Everything was OK, so move into stream directory
     fs::rename(tmpdir.into_path(), &stream_root_dir)?;
