@@ -12,6 +12,7 @@ concurrent_git_pool = { path = "../concurrent_git_pool" }
 
 ansi_term = "0.12.1"
 anyhow = "1"
+assert_cmd = "2"
 async-process = "1.4.0"
 async-trait = "0.1.57"
 atty = "0.2.14"

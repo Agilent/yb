@@ -2,7 +2,8 @@ use core::fmt;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::{Stdio};
+use assert_cmd::Command;
 
 use crate::data_model::git::{
     BranchStatus, LocalTrackingBranch, LocalTrackingBranchWithUpstreamComparison,
@@ -332,15 +333,13 @@ pub fn enumerate_revisions<P: AsRef<Path>>(repo_path: P) -> YbResult<HashSet<Str
 pub fn clone_and_enumerate_revisions(spec_repo: &SpecRepo) -> YbResult<HashSet<String>> {
     let tmp = TempDir::new().unwrap();
 
-    Command::new("git")
-        .arg("clone")
+    let mut cmd = Command::new("git");
+    cmd.arg("clone")
         .arg(&spec_repo.url)
         .arg("-b")
         .arg(&spec_repo.refspec)
-        .arg(tmp.path())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .output()?;
+        .arg(tmp.path());
+    cmd.assert().success();
 
     enumerate_revisions(tmp.path())
 }
