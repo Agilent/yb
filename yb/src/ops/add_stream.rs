@@ -2,6 +2,7 @@ use eyre::WrapErr;
 use std::fs;
 use std::fs::OpenOptions;
 use std::path::PathBuf;
+use assert_cmd::Command;
 
 use git2::build::RepoBuilder;
 use git2::FetchOptions;
@@ -98,7 +99,9 @@ pub fn op_add_stream(options: AddStreamOptions) -> YbResult<()> {
     Stream::load(PathBuf::from(tmpdir.path()), stream_name, key)?;
 
     // Everything was OK, so move into stream directory
-    fs::rename(tmpdir.into_path(), &stream_root_dir)?;
+    let mut mv_cmd = Command::new("mv");
+    mv_cmd.arg(tmpdir.into_path()).arg(&stream_root_dir);
+    mv_cmd.assert().success();
 
     println!("yb {:?}", &yb_env);
 
