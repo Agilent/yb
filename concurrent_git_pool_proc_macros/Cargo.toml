@@ -10,10 +10,10 @@ proc-macro = true
 
 [dependencies]
 anyhow = "1"
-syn = { version = "1.0.101", features = ["full"] }
-quote = "1.0.21"
-proc-macro2 = "1.0.46"
-tokio = { version = "1" }
+syn = { version = "1", features = ["full"] }
+quote = "1"
+proc-macro2 = "1"
+tokio = "1"
 
 [dev-dependencies]
 concurrent_git_pool = { path = "../concurrent_git_pool" }
