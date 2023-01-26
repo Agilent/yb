@@ -1,8 +1,8 @@
+use assert_cmd::Command;
 use eyre::WrapErr;
 use std::fs;
 use std::fs::OpenOptions;
 use std::path::PathBuf;
-use assert_cmd::Command;
 
 use git2::build::RepoBuilder;
 use git2::FetchOptions;

@@ -171,18 +171,53 @@ impl SyncAction for CloneRepoSyncAction {
             Some(self.dest_repo_path.to_str().unwrap().to_string()),
         )
         .await
-        .unwrap()
-        .map_err(|e| e.into())
+        .unwrap()?;
 
-        // Command::new("git")
-        //     .arg("clone")
-        //     .arg(&self.spec_repo.url)
-        //     .arg("-b")
-        //     .arg(&self.spec_repo.refspec)
-        //     .arg(&self.dest_repo_path)
-        //     .stdout(Stdio::null())
-        //     .stderr(Stdio::null())
-        //     .output()?;
-        // Ok(())
+        assert_cmd::Command::new("git")
+            .current_dir(&self.dest_repo_path)
+            .arg("checkout")
+            .arg(&self.spec_repo.refspec)
+            .assert()
+            .success()
+            .success();
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::commands::sync::actions::{CloneRepoSyncAction, SyncAction};
+    use crate::spec::SpecRepo;
+    use crate::util::debug_temp_dir::DebugTempDir;
+    use assert_cmd::Command;
+    use concurrent_git_pool::PoolHelper;
+
+    #[tokio::test]
+    async fn clone_action_checks_out_correct_refspec() {
+        let dir = DebugTempDir::new().unwrap();
+        let dir_path = dir.path().to_path_buf();
+
+        let pool = PoolHelper::connect_or_local().await.unwrap();
+
+        let spec_repo = SpecRepo {
+            url: "https://github.com/agherzan/meta-raspberrypi.git".to_string(),
+            refspec: "honister".to_string(),
+            extra_remotes: Default::default(),
+            layers: None,
+        };
+
+        let action = CloneRepoSyncAction::new(dir_path.clone(), spec_repo);
+        action.apply(&pool).await.unwrap();
+
+        let mut branch_cmd = Command::new("git");
+        branch_cmd
+            .current_dir(dir_path)
+            .arg("branch")
+            .arg("--show-current");
+        let branch_cmd_output = branch_cmd.output().unwrap();
+        let current_branch = std::str::from_utf8(&branch_cmd_output.stdout)
+            .unwrap()
+            .trim();
+        assert_eq!(current_branch, "honister");
     }
 }
