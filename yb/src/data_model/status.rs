@@ -337,6 +337,8 @@ pub fn clone_and_enumerate_revisions(spec_repo: &SpecRepo) -> YbResult<HashSet<S
         .arg("-b")
         .arg(&spec_repo.refspec)
         .arg(tmp.path());
+    cmd.env("GIT_TERMINAL_PROMPT", "0");
+    cmd.env("GIT_SSH_COMMAND", "ssh -o BatchMode=yes");
     cmd.assert().success();
 
     enumerate_revisions(tmp.path())

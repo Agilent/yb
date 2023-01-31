@@ -41,6 +41,7 @@ impl Pool {
 
         let mut command = Command::new("git");
         command.env("GIT_TERMINAL_PROMPT", "0");
+        command.env("GIT_SSH_COMMAND", "ssh -o BatchMode=yes");
         command.arg("clone").arg(remote);
         if let Some(directory) = directory {
             command.arg(directory.as_ref());

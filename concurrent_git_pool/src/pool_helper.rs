@@ -35,6 +35,7 @@ impl PoolHelper {
 
         let mut command = Command::new("git");
         command.env("GIT_TERMINAL_PROMPT", "0");
+        command.env("GIT_SSH_COMMAND", "ssh -o BatchMode=yes");
         command.arg("clone").arg(uri.into());
         if let Some(directory) = directory {
             command.arg(directory);
