@@ -178,7 +178,6 @@ impl SyncAction for CloneRepoSyncAction {
             .arg("checkout")
             .arg(&self.spec_repo.refspec)
             .assert()
-            .success()
             .success();
         Ok(())
     }
