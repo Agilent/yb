@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/git_reference_cache/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/yb/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/yb_tests/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/concurrent_git_pool/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/concurrent_git_pool_proc_macros/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/concurrent_git_pool_proc_macros/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/yb_proc_macros/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/indicatif/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/indicatif/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/indicatif/tests" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+      <excludeFolder url="file://$MODULE_DIR$/src/git_reference_cache/target" />
+      <excludeFolder url="file://$MODULE_DIR$/yb/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
