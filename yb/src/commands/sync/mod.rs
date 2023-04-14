@@ -116,7 +116,9 @@ impl SubcommandRunner for SyncCommand {
                 }
 
                 if status_data.is_workdir_dirty {
-                    sync_actions.push(box ResetGitWorkdirSyncAction::new(status_data.path.clone()))
+                    sync_actions.push(Box::new(ResetGitWorkdirSyncAction::new(
+                        status_data.path.clone(),
+                    )))
                 }
 
                 match &status_data.corresponding_spec_repo {
@@ -143,8 +145,10 @@ impl SubcommandRunner for SyncCommand {
                                 match upstream_comparison {
                                     UpstreamComparison::UpToDate => {}
                                     UpstreamComparison::Behind(_) => {
-                                        sync_actions.push(box FastForwardPullSyncAction::new(
-                                            status_data.path.clone(),
+                                        sync_actions.push(Box::new(
+                                            FastForwardPullSyncAction::new(
+                                                status_data.path.clone(),
+                                            ),
                                         ));
                                     }
                                     UpstreamComparison::Ahead(_) => {
@@ -161,39 +165,43 @@ impl SubcommandRunner for SyncCommand {
                                         &remote_match.spec_repo.refspec,
                                     )?;
 
-                                sync_actions.push(box CreateLocalTrackingBranchSyncAction::new(
-                                    status_data.path.clone(),
-                                    new_local_branch_name.clone(),
-                                    RemoteTrackingBranch {
-                                        branch_name: remote_match.spec_repo.refspec.clone(),
-                                        remote_name: remote_match.matching_remote_name.clone(),
-                                    },
+                                sync_actions.push(Box::new(
+                                    CreateLocalTrackingBranchSyncAction::new(
+                                        status_data.path.clone(),
+                                        new_local_branch_name.clone(),
+                                        RemoteTrackingBranch {
+                                            branch_name: remote_match.spec_repo.refspec.clone(),
+                                            remote_name: remote_match.matching_remote_name.clone(),
+                                        },
+                                    ),
                                 ));
 
-                                sync_actions.push(box CheckoutBranchSyncAction::new(
+                                sync_actions.push(Box::new(CheckoutBranchSyncAction::new(
                                     status_data.path.clone(),
                                     new_local_branch_name.clone(),
-                                ));
+                                )));
 
-                                sync_actions.push(box FastForwardPullSyncAction::new(
+                                sync_actions.push(Box::new(FastForwardPullSyncAction::new(
                                     status_data.path.clone(),
-                                ));
+                                )));
                             } else {
                                 let optimal_branch = determine_optimal_checkout_branch(
                                     &remote_match.local_branches_tracking_remote,
                                 )
                                 .unwrap();
 
-                                sync_actions.push(box CheckoutBranchSyncAction::new(
+                                sync_actions.push(Box::new(CheckoutBranchSyncAction::new(
                                     status_data.path.clone(),
                                     optimal_branch.local_tracking_branch.branch_name.clone(),
-                                ));
+                                )));
 
                                 match optimal_branch.upstream_comparison {
                                     UpstreamComparison::UpToDate => {}
                                     UpstreamComparison::Behind(_) => {
-                                        sync_actions.push(box FastForwardPullSyncAction::new(
-                                            status_data.path.clone(),
+                                        sync_actions.push(Box::new(
+                                            FastForwardPullSyncAction::new(
+                                                status_data.path.clone(),
+                                            ),
                                         ));
                                     }
                                     UpstreamComparison::Ahead(_ahead) => {
@@ -213,40 +221,40 @@ impl SubcommandRunner for SyncCommand {
 
         for repo in &status.missing_repos {
             let dest = yb_env.sources_dir().join(repo.name.clone());
-            sync_actions.push(box CloneRepoSyncAction::new(
+            sync_actions.push(Box::new(CloneRepoSyncAction::new(
                 dest.clone(),
                 repo.spec_repo.clone(),
-            ));
+            )));
 
             // TODO add action to temporary clone the repo and precheck that the expected layers
             //  actually exist?
             for layer in repo.spec_repo.resolved_layers(dest) {
                 for layer in layer {
-                    sync_actions.push(box ModifyBBLayersConfSyncAction::new(
+                    sync_actions.push(Box::new(ModifyBBLayersConfSyncAction::new(
                         layer.path,
                         status.bblayers_path.clone(),
                         BBLayersEditAction::AddLayer,
-                    ));
+                    )));
                 }
             }
         }
 
         // This doesn't include layers for missing spec repos - that is handled above
         for layer in status.missing_bblayers_layers_for_extant_spec_repos() {
-            sync_actions.push(box ModifyBBLayersConfSyncAction::new(
+            sync_actions.push(Box::new(ModifyBBLayersConfSyncAction::new(
                 layer.path,
                 status.bblayers_path.clone(),
                 BBLayersEditAction::AddLayer,
-            ));
+            )));
         }
 
         if self.exact {
             for layer in status.extraneous_bblayers_layers() {
-                sync_actions.push(box ModifyBBLayersConfSyncAction::new(
+                sync_actions.push(Box::new(ModifyBBLayersConfSyncAction::new(
                     layer.path,
                     status.bblayers_path.clone(),
                     BBLayersEditAction::RemoveLayer,
-                ));
+                )));
             }
 
             // TODO workspace layer
