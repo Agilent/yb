@@ -4,7 +4,6 @@ use std::collections::HashMap;
 use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::Read;
-use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -27,17 +26,15 @@ pub enum ActiveSpecStatus {
     StreamsBroken(HashMap<StreamKey, Arc<eyre::Report>>),
 }
 
-pub struct YbEnv<'arena> {
+pub struct YbEnv {
     /// Absolute path to the .yb directory
     dir: PathBuf,
     config: YbConf,
     active_spec_status: Option<ActiveSpecStatus>,
     streams: StreamDb,
-    // TODO: remove if not going to use it
-    _placeholder: PhantomData<&'arena str>,
 }
 
-impl<'arena> Debug for YbEnv<'arena> {
+impl Debug for YbEnv {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("YbEnv")
             .field("dir", &self.dir)
@@ -48,20 +45,18 @@ impl<'arena> Debug for YbEnv<'arena> {
     }
 }
 
-impl<'arena> YbEnv<'arena> {
+impl YbEnv {
     fn new(
         dir: PathBuf,
         config: YbConf,
         active_spec: Option<ActiveSpecStatus>,
         streams: StreamDb,
-        _arena: &'arena toolshed::Arena,
     ) -> Self {
         Self {
             dir,
             config,
             active_spec_status: active_spec,
             streams,
-            _placeholder: PhantomData,
         }
     }
 
@@ -132,8 +127,7 @@ impl<'arena> YbEnv<'arena> {
     pub fn initialize<S: Into<PathBuf>>(
         location: S,
         yocto_env: &YoctoEnvironment,
-        arena: &'arena toolshed::Arena,
-    ) -> YbResult<YbEnv<'arena>> {
+    ) -> YbResult<YbEnv> {
         // TODO: create in temp directory then move over?
         let yb_dir = location.into().join(YB_ENV_DIRECTORY);
         println!("creating at {:?}", &yb_dir);
@@ -151,14 +145,13 @@ impl<'arena> YbEnv<'arena> {
         let streams_dir = yb_dir.join(STREAMS_SUBDIR);
         fs::create_dir(streams_dir)?;
 
-        Ok(YbEnv::new(yb_dir, conf, None, StreamDb::new(), arena))
+        Ok(YbEnv::new(yb_dir, conf, None, StreamDb::new()))
     }
 }
 
 /// Search upwards from `start_point` for a .yb directory and load the environment if found.
 pub fn try_discover_yb_env<S: AsRef<Path>>(
     start_point: S,
-    arena: &toolshed::Arena,
 ) -> YbResult<Option<YbEnv>> {
     // Locate the hidden .yb directory
     find_dir_recurse_upwards(start_point, YB_ENV_DIRECTORY)?
@@ -198,7 +191,7 @@ pub fn try_discover_yb_env<S: AsRef<Path>>(
                 }
             }
 
-            return Ok(YbEnv::new(yb_dir, conf, active_spec, stream_db, arena));
+            return Ok(YbEnv::new(yb_dir, conf, active_spec, stream_db));
         })
         .transpose()
 }

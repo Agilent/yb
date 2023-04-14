@@ -11,12 +11,12 @@ use crate::util::paths::{list_subdirectories_sorted, run_which};
 use crate::yb_env::{try_discover_yb_env, YbEnv};
 
 #[derive(Debug)]
-pub enum ToolContext<'arena> {
-    Yb(YbEnv<'arena>),
+pub enum ToolContext {
+    Yb(YbEnv),
     YoctoEnv(YoctoEnvironment),
 }
 
-impl<'arena> ToolContext<'arena> {
+impl ToolContext {
     /// Returns a `Vec` of `Repository` objects representing each top-level git repo found in
     /// the sources directory.
     pub fn sources_repos(&self) -> YbResult<Vec<Repository>> {
@@ -53,16 +53,15 @@ pub struct YoctoEnvironment {
     pub(crate) sources_dir: PathBuf,
 }
 
-pub fn determine_tool_context<'arena>(
+pub fn determine_tool_context(
     config: &Config,
-    arena: &'arena toolshed::Arena,
-) -> YbResult<Option<ToolContext<'arena>>> {
+) -> YbResult<Option<ToolContext>> {
     if run_which("petalinux-build")?.is_some() {
         eyre::bail!("PetaLinux is not supported, but an active PetaLinux environment was detected");
     }
 
     // Figure out what kind of context we are executing under
-    if let Some(yb_env) = try_discover_yb_env(config.cwd(), arena)? {
+    if let Some(yb_env) = try_discover_yb_env(config.cwd())? {
         // A .yb directory was found
         return Ok(Some(ToolContext::Yb(yb_env)));
     } else {
@@ -107,11 +106,10 @@ pub fn determine_tool_context<'arena>(
     Ok(None)
 }
 
-pub fn require_tool_context<'arena>(
+pub fn require_tool_context(
     config: &Config,
-    arena: &'arena toolshed::Arena,
-) -> YbResult<ToolContext<'arena>> {
-    determine_tool_context(config, arena).and_then(|c| {
+) -> YbResult<ToolContext> {
+    determine_tool_context(config).and_then(|c| {
         c.ok_or_else(|| {
             tracing::error!("expected a yb or Yocto environment");
             eyre::eyre!("expected a yb or Yocto environment")
@@ -121,11 +119,10 @@ pub fn require_tool_context<'arena>(
     })
 }
 
-pub fn require_yb_env<'arena>(
+pub fn require_yb_env(
     config: &Config,
-    arena: &'arena toolshed::Arena,
-) -> YbResult<YbEnv<'arena>> {
-    determine_tool_context(config, arena).and_then(|c| match c {
+) -> YbResult<YbEnv> {
+    determine_tool_context(config).and_then(|c| match c {
         None => eyre::bail!("expected a yb environment; no environment was found"),
         Some(ToolContext::Yb(yb_env)) => Ok(yb_env),
         Some(ToolContext::YoctoEnv(_)) => {
@@ -134,11 +131,10 @@ pub fn require_yb_env<'arena>(
     })
 }
 
-pub fn maybe_yb_env<'arena>(
+pub fn maybe_yb_env(
     config: &Config,
-    arena: &'arena toolshed::Arena,
-) -> YbResult<Option<YbEnv<'arena>>> {
-    let ret = determine_tool_context(config, arena).map(|c| {
+) -> YbResult<Option<YbEnv>> {
+    let ret = determine_tool_context(config).map(|c| {
         if let Some(ToolContext::Yb(yb_env)) = c {
             Some(yb_env)
         } else {

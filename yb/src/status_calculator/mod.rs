@@ -191,8 +191,7 @@ where
     F: FnMut(StatusCalculatorEvent),
 {
     let config = &options.config;
-    let arena = toolshed::Arena::new();
-    let context = require_tool_context(config, &arena)?;
+    let context = require_tool_context(config)?;
 
     let sources_subdirs = match list_subdirectories_sorted(&context.sources_dir())
         .map_err(|e| e.downcast::<io::Error>())

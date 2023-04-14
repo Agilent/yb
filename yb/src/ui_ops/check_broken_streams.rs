@@ -30,9 +30,7 @@ impl<'cfg> UiCheckBrokenStreamsOptions<'cfg> {
 }
 
 pub fn ui_op_check_broken_streams(options: UiCheckBrokenStreamsOptions) -> YbResult<()> {
-    let arena = toolshed::Arena::new();
-
-    let yb_env = match maybe_yb_env(options.config, &arena)? {
+    let yb_env = match maybe_yb_env(options.config)? {
         Some(yb_env) => yb_env,
         None => {
             return Ok(());

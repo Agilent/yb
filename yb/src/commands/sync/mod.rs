@@ -54,9 +54,7 @@ impl SubcommandRunner for SyncCommand {
     async fn run(&self, config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
         ui_op_check_broken_streams(UiCheckBrokenStreamsOptions::new(config, mp))?;
 
-        let arena = toolshed::Arena::new();
-
-        let mut yb_env = require_yb_env(config, &arena)?;
+        let mut yb_env = require_yb_env(config)?;
 
         if let Some(spec_name) = &self.spec {
             // TODO: don't immediately activate. Use current spec and desired spec to better calculate

@@ -23,8 +23,7 @@ impl SubcommandRunner for ActivateCommand {
     async fn run(&self, config: &mut Config, mp: &MultiProgress) -> YbResult<()> {
         ui_op_check_broken_streams(UiCheckBrokenStreamsOptions::new(config, mp))?;
 
-        let arena = toolshed::Arena::new();
-        let mut yb_env = require_yb_env(config, &arena)?;
+        let mut yb_env = require_yb_env(config)?;
 
         if yb_env.stream_db().is_empty() {
             mp.warn("couldn't activate a spec because there are no streams");

@@ -31,8 +31,7 @@ pub struct UpgradeCommand {
 #[async_trait]
 impl SubcommandRunner for UpgradeCommand {
     async fn run(&self, config: &mut Config, _mp: &MultiProgress) -> YbResult<()> {
-        let arena = toolshed::Arena::new();
-        let context = determine_tool_context(config, &arena)?;
+        let context = determine_tool_context(config)?;
 
         match context {
             Some(ToolContext::Yb(yb_env)) => {
@@ -56,8 +55,7 @@ impl SubcommandRunner for UpgradeCommand {
                     );
                 }
 
-                let arena = toolshed::Arena::new();
-                let new_context = ToolContext::Yb(YbEnv::initialize(target, &context2, &arena)?);
+                let new_context = ToolContext::Yb(YbEnv::initialize(target, &context2)?);
                 match &new_context {
                     ToolContext::Yb(yb_env) => println!("initialized yb env at {yb_env:?}"),
                     _ => panic!(""),
@@ -80,8 +78,7 @@ impl SubcommandRunner for UpgradeCommand {
 
             if let Some(default_spec_name) = &self.default_spec {
                 // TODO deduplicate code
-                let arena = toolshed::Arena::new();
-                let mut yb_env = require_yb_env(config, &arena)?;
+                let mut yb_env = require_yb_env(config)?;
 
                 let spec = yb_env.find_spec(default_spec_name)?.cloned();
                 if let Some(spec) = spec {

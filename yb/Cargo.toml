@@ -43,7 +43,6 @@ slotmap = "1"
 tempfile = "3"
 tokio = { version = "1", features = ["full"] }
 tokio-util = { version = "0.7.3", features = ["full"] }
-toolshed = "0.8.1"
 tracing = "0.1"
 tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

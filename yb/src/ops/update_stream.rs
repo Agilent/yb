@@ -37,8 +37,7 @@ where
 {
     let mut result = UpdateStreamResult::default();
 
-    let arena = toolshed::Arena::new();
-    let mut yb_env = require_yb_env(options.config, &arena)?;
+    let mut yb_env = require_yb_env(options.config)?;
 
     let active_spec_stream = yb_env.active_spec_status().and_then(|status| match status {
         ActiveSpecStatus::StreamsBroken(..) => None,
