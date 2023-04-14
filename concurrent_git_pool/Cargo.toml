@@ -8,14 +8,14 @@ edition = "2021"
 [dependencies]
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
-futures = "0.3.24"
+futures = "0.3.28"
 serde = { version = "1", features = ["derive"] }
-sha2 = "0.10.3"
+sha2 = "0.10.6"
 tempfile = "3"
 thiserror = "1"
 tokio = { version = "1", features = ["full"] }
-tarpc = { version = "0.31.0", features = ["full"] }
-tracing = "0.1.36"
+tarpc = { version = "0.32.0", features = ["full"] }
+tracing = "0.1.37"
 
 [[bin]]
 name = "concurrent_git_pool"

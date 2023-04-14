@@ -10,7 +10,7 @@ proc-macro = true
 
 [dependencies]
 anyhow = "1"
-syn = { version = "1", features = ["full"] }
+syn = { version = "2", features = ["full"] }
 quote = "1"
 proc-macro2 = "1"
 tokio = "1"
