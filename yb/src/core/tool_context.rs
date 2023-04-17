@@ -64,42 +64,42 @@ pub fn determine_tool_context(
     if let Some(yb_env) = try_discover_yb_env(config.cwd())? {
         // A .yb directory was found
         return Ok(Some(ToolContext::Yb(yb_env)));
-    } else {
-        // Check for activated Yocto environment
-        let bbpath = env::var("BBPATH").ok().map(PathBuf::from);
-        let poky_layer_maybe = run_which("oe-buildenv-internal")?
-            .and_then(|s| s.parent().map(|p| p.to_path_buf()))
-            .and_then(|s| s.parent().map(|p| p.to_path_buf()));
+    }
 
-        // Assume all other repos are siblings of the poky layer
-        let sources_dir = poky_layer_maybe
-            .as_ref()
-            .map(|l| l.parent().map(|p| p.to_path_buf()).unwrap());
+    // Check for activated Yocto environment
+    let bbpath = env::var("BBPATH").ok().map(PathBuf::from);
+    let poky_layer_maybe = run_which("oe-buildenv-internal")?
+        .and_then(|s| s.parent().map(|p| p.to_path_buf()))
+        .and_then(|s| s.parent().map(|p| p.to_path_buf()));
 
-        match (&bbpath, &poky_layer_maybe, &sources_dir) {
-            (Some(build_dir), Some(poky_layer), Some(sources_dir)) => {
-                // Check for bare Poky environments
-                if let Some(build_dir_parent) = &build_dir.parent().map(Path::to_path_buf) {
-                    if poky_layer == build_dir_parent {
-                        eyre::bail!("Bare poky environments are not supported");
-                    }
+    // Assume all other repos are siblings of the poky layer
+    let sources_dir = poky_layer_maybe
+        .as_ref()
+        .map(|l| l.parent().map(|p| p.to_path_buf()).unwrap());
+
+    match (&bbpath, &poky_layer_maybe, &sources_dir) {
+        (Some(build_dir), Some(poky_layer), Some(sources_dir)) => {
+            // Check for bare Poky environments
+            if let Some(build_dir_parent) = &build_dir.parent().map(Path::to_path_buf) {
+                if poky_layer == build_dir_parent {
+                    eyre::bail!("Bare poky environments are not supported");
                 }
+            }
 
-                return Ok(Some(ToolContext::YoctoEnv(YoctoEnvironment {
-                    sources_dir: sources_dir.clone(),
-                    build_dir: build_dir.clone(),
-                    poky_layer: Some(poky_layer.clone()),
-                })));
-            }
-            (None, None, None) => {}
-            _ => {
-                eyre::bail!(
-                    "Found partially activated Yocto environment? {:?} {:?} {:?}",
-                    &bbpath,
-                    &poky_layer_maybe,
-                    &sources_dir
-                );
-            }
+            return Ok(Some(ToolContext::YoctoEnv(YoctoEnvironment {
+                sources_dir: sources_dir.clone(),
+                build_dir: build_dir.clone(),
+                poky_layer: Some(poky_layer.clone()),
+            })));
+        }
+        (None, None, None) => {}
+        _ => {
+            eyre::bail!(
+                "Found partially activated Yocto environment? {:?} {:?} {:?}",
+                &bbpath,
+                &poky_layer_maybe,
+                &sources_dir
+            );
         }
     }
 
