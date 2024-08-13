@@ -2983,6 +2983,7 @@ version = "0.1.0"
 dependencies = [
  "assert_cmd",
  "color-eyre 0.6.3",
+ "concurrent_git_pool",
  "concurrent_git_pool_proc_macros",
  "tokio",
  "yb",
