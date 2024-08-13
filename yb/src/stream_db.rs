@@ -19,6 +19,12 @@ pub struct StreamDb {
     streams: SlotMap<StreamKey, Stream>,
 }
 
+impl Default for StreamDb {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl StreamDb {
     pub fn new() -> Self {
         Self {

@@ -178,164 +178,160 @@ impl SubcommandRunner for StatusCommand {
                     subdir_spinner.as_ref().unwrap().set_prefix(operation_name)
                 }
                 StatusCalculatorEvent::SubdirStatusComputed(status) => {
-                    match status {
-                        ComputedStatusEntry::OnDiskRepo(repo_status) => {
-                            let on_branch_message = mp.println_after(
-                                subdir_spinner.as_ref().unwrap(),
-                                format!(
-                                    "\ton branch '{}'",
-                                    &repo_status.current_branch_status.local_branch_name
-                                ),
-                            );
-                            subdir_lines.push(on_branch_message.clone());
+                    if let ComputedStatusEntry::OnDiskRepo(repo_status) = status {
+                        let on_branch_message = mp.println_after(
+                            subdir_spinner.as_ref().unwrap(),
+                            format!(
+                                "\ton branch '{}'",
+                                &repo_status.current_branch_status.local_branch_name
+                            ),
+                        );
+                        subdir_lines.push(on_branch_message.clone());
 
-                            let branch_message = mp.println_after(&on_branch_message, "");
-                            subdir_lines.push(branch_message.clone());
-                            let mut branch_status_color = None;
+                        let branch_message = mp.println_after(&on_branch_message, "");
+                        subdir_lines.push(branch_message.clone());
+                        let mut branch_status_color = None;
 
-                            // Report difference to upstream branch (if on branch and tracking an upstream)
-                            if let Some(current_branch_status_message) =
-                                format_upstream_status_message(&repo_status.current_branch_status)
-                            {
-                                branch_message.set_message(format!(
-                                    "\t{}",
-                                    current_branch_status_message.message
-                                ));
-                                branch_status_color = current_branch_status_message.style;
-                            }
+                        // Report difference to upstream branch (if on branch and tracking an upstream)
+                        if let Some(current_branch_status_message) =
+                            format_upstream_status_message(&repo_status.current_branch_status)
+                        {
+                            branch_message.set_message(format!(
+                                "\t{}",
+                                current_branch_status_message.message
+                            ));
+                            branch_status_color = current_branch_status_message.style;
+                        }
 
-                            if let Some(corresponding_spec_repo_status) =
-                                &repo_status.corresponding_spec_repo
-                            {
-                                let corresponding_spec_repo_message =
-                                    mp.println_after(&branch_message, "");
-                                subdir_lines.push(corresponding_spec_repo_message.clone());
+                        if let Some(corresponding_spec_repo_status) =
+                            &repo_status.corresponding_spec_repo
+                        {
+                            let corresponding_spec_repo_message =
+                                mp.println_after(&branch_message, "");
+                            subdir_lines.push(corresponding_spec_repo_message.clone());
 
-                                match &corresponding_spec_repo_status {
-                                    CorrespondingSpecRepoStatus::RemoteMatch(
-                                        remote_match_status,
-                                    ) => {
-                                        if !repo_status.is_local_branch_tracking_correct_branch() {
-                                            if !remote_match_status
+                            match &corresponding_spec_repo_status {
+                                CorrespondingSpecRepoStatus::RemoteMatch(
+                                    remote_match_status,
+                                ) => {
+                                    if !repo_status.is_local_branch_tracking_correct_branch() {
+                                        if !remote_match_status
+                                            .local_branches_tracking_remote
+                                            .is_empty()
+                                        {
+                                            corresponding_spec_repo_message.set_message(
+                                                    Style::new().red().apply_to(format!(
+                                                        "\tshould be on a branch tracking '{}', such as:",
+                                                        remote_match_status.remote_tracking_branch.to_string()
+                                                    )).to_string(),
+                                                );
+
+                                            for branch in &remote_match_status
                                                 .local_branches_tracking_remote
-                                                .is_empty()
                                             {
-                                                corresponding_spec_repo_message.set_message(
-                                                        Style::new().red().apply_to(format!(
-                                                            "\tshould be on a branch tracking '{}', such as:",
-                                                            remote_match_status.remote_tracking_branch.to_string()
-                                                        )).to_string(),
-                                                    );
-
-                                                for branch in &remote_match_status
-                                                    .local_branches_tracking_remote
-                                                {
-                                                    let last_message = subdir_lines.last().unwrap();
-                                                    subdir_lines.push(
-                                                        mp.println_after(
-                                                            last_message,
-                                                            Style::new()
-                                                                .red()
-                                                                .apply_to(format!(
-                                                                    "\t\t{}",
-                                                                    branch
-                                                                        .local_tracking_branch
-                                                                        .branch_name
-                                                                ))
-                                                                .to_string(),
-                                                        ),
-                                                    );
-                                                }
-                                            } else {
-                                                corresponding_spec_repo_message.set_message(
-                                                    Style::new()
-                                                        .red()
-                                                        .apply_to(format!(
-                                                            "\tshould be on a branch tracking '{}'",
-                                                            remote_match_status
-                                                                .remote_tracking_branch
-                                                                .to_string()
-                                                        ))
-                                                        .to_string(),
+                                                let last_message = subdir_lines.last().unwrap();
+                                                subdir_lines.push(
+                                                    mp.println_after(
+                                                        last_message,
+                                                        Style::new()
+                                                            .red()
+                                                            .apply_to(format!(
+                                                                "\t\t{}",
+                                                                branch
+                                                                    .local_tracking_branch
+                                                                    .branch_name
+                                                            ))
+                                                            .to_string(),
+                                                    ),
                                                 );
                                             }
-
-                                            branch_status_color =
-                                                Some(Style::from_dotted_str("red.bold"));
-                                        }
-                                    }
-                                    CorrespondingSpecRepoStatus::RelatedRepo {
-                                        spec_repo, ..
-                                    } => {
-                                        corresponding_spec_repo_message.set_message(
-                                                Style::new().red().on_white().apply_to("\tthis repo shares commits with a spec repo, but the remote is wrong").to_string(),
+                                        } else {
+                                            corresponding_spec_repo_message.set_message(
+                                                Style::new()
+                                                    .red()
+                                                    .apply_to(format!(
+                                                        "\tshould be on a branch tracking '{}'",
+                                                        remote_match_status
+                                                            .remote_tracking_branch
+                                                            .to_string()
+                                                    ))
+                                                    .to_string(),
                                             );
-
-                                        subdir_lines.push(mp.println_after(
-                                            &corresponding_spec_repo_message,
-                                            format!("\t\trepo: {}", spec_repo.url),
-                                        ));
-                                        subdir_lines.push(mp.println_after(
-                                            subdir_lines.last().unwrap(),
-                                            format!("\t\trefspec: {}", spec_repo.refspec),
-                                        ));
+                                        }
 
                                         branch_status_color =
                                             Some(Style::from_dotted_str("red.bold"));
                                     }
                                 }
-                            }
+                                CorrespondingSpecRepoStatus::RelatedRepo {
+                                    spec_repo, ..
+                                } => {
+                                    corresponding_spec_repo_message.set_message(
+                                            Style::new().red().on_white().apply_to("\tthis repo shares commits with a spec repo, but the remote is wrong").to_string(),
+                                        );
 
-                            if let Some(commit_ids) = &repo_status.recent_commits {
-                                for id in commit_ids {
-                                    let commit = repo_status.repo.find_commit(*id).unwrap(); // TODO use YbResult
-                                    let oneline = format!(
-                                        "\t{} {}",
-                                        Style::default().yellow().apply_to(
-                                            commit
-                                                .as_object()
-                                                .short_id()
-                                                .unwrap()
-                                                .as_str()
-                                                .unwrap()
-                                        ),
-                                        commit.summary().unwrap()
-                                    );
+                                    subdir_lines.push(mp.println_after(
+                                        &corresponding_spec_repo_message,
+                                        format!("\t\trepo: {}", spec_repo.url),
+                                    ));
+                                    subdir_lines.push(mp.println_after(
+                                        subdir_lines.last().unwrap(),
+                                        format!("\t\trefspec: {}", spec_repo.refspec),
+                                    ));
 
-                                    let last_message = subdir_lines.last().unwrap();
-                                    subdir_lines.push(mp.println_after(last_message, oneline));
-                                }
-                            }
-
-                            let mut opts = StatusOptions::new();
-                            let statuses = repo_status.repo.statuses(Some(&mut opts)).unwrap(); // TODO YbResult
-                            if !statuses.is_empty() {
-                                branch_status_color = Some(Style::from_dotted_str("red.bold"));
-                            }
-
-                            for short_status in format_short_statuses(&repo_status.repo, &statuses)
-                            {
-                                let last_message = subdir_lines.last().unwrap();
-                                subdir_lines.push(mp.println_after(
-                                    last_message,
-                                    Style::default().red().apply_to(short_status).to_string(),
-                                ));
-                            }
-
-                            // Re-color the subdir spinner label if there is a status to be reported
-                            if let Some(branch_status_style) = branch_status_color {
-                                subdir_spinner
-                                    .as_ref()
-                                    .unwrap()
-                                    .restyle_message(branch_status_style);
-                            } else if self.skip_unremarkable {
-                                for line in subdir_lines.drain(..) {
-                                    line.finish_and_clear();
+                                    branch_status_color =
+                                        Some(Style::from_dotted_str("red.bold"));
                                 }
                             }
                         }
-                        // TODO
-                        _ => {}
+
+                        if let Some(commit_ids) = &repo_status.recent_commits {
+                            for id in commit_ids {
+                                let commit = repo_status.repo.find_commit(*id).unwrap(); // TODO use YbResult
+                                let oneline = format!(
+                                    "\t{} {}",
+                                    Style::default().yellow().apply_to(
+                                        commit
+                                            .as_object()
+                                            .short_id()
+                                            .unwrap()
+                                            .as_str()
+                                            .unwrap()
+                                    ),
+                                    commit.summary().unwrap()
+                                );
+
+                                let last_message = subdir_lines.last().unwrap();
+                                subdir_lines.push(mp.println_after(last_message, oneline));
+                            }
+                        }
+
+                        let mut opts = StatusOptions::new();
+                        let statuses = repo_status.repo.statuses(Some(&mut opts)).unwrap(); // TODO YbResult
+                        if !statuses.is_empty() {
+                            branch_status_color = Some(Style::from_dotted_str("red.bold"));
+                        }
+
+                        for short_status in format_short_statuses(&repo_status.repo, &statuses)
+                        {
+                            let last_message = subdir_lines.last().unwrap();
+                            subdir_lines.push(mp.println_after(
+                                last_message,
+                                Style::default().red().apply_to(short_status).to_string(),
+                            ));
+                        }
+
+                        // Re-color the subdir spinner label if there is a status to be reported
+                        if let Some(branch_status_style) = branch_status_color {
+                            subdir_spinner
+                                .as_ref()
+                                .unwrap()
+                                .restyle_message(branch_status_style);
+                        } else if self.skip_unremarkable {
+                            for line in subdir_lines.drain(..) {
+                                line.finish_and_clear();
+                            }
+                        }
                     }
                 }
                 StatusCalculatorEvent::FinishProcessSubdir => {

@@ -191,7 +191,7 @@ pub fn try_discover_yb_env<S: AsRef<Path>>(
                 }
             }
 
-            return Ok(YbEnv::new(yb_dir, conf, active_spec, stream_db));
+            Ok(YbEnv::new(yb_dir, conf, active_spec, stream_db))
         })
         .transpose()
 }

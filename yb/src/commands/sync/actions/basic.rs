@@ -134,7 +134,7 @@ impl SyncAction for CreateLocalTrackingBranchSyncAction {
             .arg("-b")
             .arg(&self.local_branch_name)
             .arg("--track")
-            .arg(&self.remote_tracking_branch.to_string())
+            .arg(self.remote_tracking_branch.to_string())
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .current_dir(&self.repo_path)

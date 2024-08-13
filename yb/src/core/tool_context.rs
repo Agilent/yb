@@ -134,12 +134,12 @@ pub fn require_yb_env(
 pub fn maybe_yb_env(
     config: &Config,
 ) -> YbResult<Option<YbEnv>> {
-    let ret = determine_tool_context(config).map(|c| {
+    
+    determine_tool_context(config).map(|c| {
         if let Some(ToolContext::Yb(yb_env)) = c {
             Some(yb_env)
         } else {
             None
         }
-    });
-    ret
+    })
 }
