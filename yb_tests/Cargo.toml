@@ -10,5 +10,4 @@ assert_cmd = "2"
 color-eyre = "0.6.3"
 tokio = "1"
 yb = { path = "../yb" }
-concurrent_git_pool = { path = "../concurrent_git_pool" }
 concurrent_git_pool_proc_macros = { path = "../concurrent_git_pool_proc_macros" }
