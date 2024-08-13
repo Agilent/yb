@@ -44,6 +44,13 @@ impl ToolContext {
             ToolContext::YoctoEnv(yocto_env) => yocto_env.build_dir.clone(),
         }
     }
+
+    pub fn poky_dir(&self) -> Option<PathBuf> {
+        match self {
+            ToolContext::Yb(yb_env) => yb_env.poky_dir(),
+            ToolContext::YoctoEnv(yocto_env) => yocto_env.poky_layer.clone(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -53,9 +60,7 @@ pub struct YoctoEnvironment {
     pub(crate) sources_dir: PathBuf,
 }
 
-pub fn determine_tool_context(
-    config: &Config,
-) -> YbResult<Option<ToolContext>> {
+pub fn determine_tool_context(config: &Config) -> YbResult<Option<ToolContext>> {
     if run_which("petalinux-build")?.is_some() {
         eyre::bail!("PetaLinux is not supported, but an active PetaLinux environment was detected");
     }
@@ -106,9 +111,7 @@ pub fn determine_tool_context(
     Ok(None)
 }
 
-pub fn require_tool_context(
-    config: &Config,
-) -> YbResult<ToolContext> {
+pub fn require_tool_context(config: &Config) -> YbResult<ToolContext> {
     determine_tool_context(config).and_then(|c| {
         c.ok_or_else(|| {
             tracing::error!("expected a yb or Yocto environment");
@@ -119,9 +122,7 @@ pub fn require_tool_context(
     })
 }
 
-pub fn require_yb_env(
-    config: &Config,
-) -> YbResult<YbEnv> {
+pub fn require_yb_env(config: &Config) -> YbResult<YbEnv> {
     determine_tool_context(config).and_then(|c| match c {
         None => eyre::bail!("expected a yb environment; no environment was found"),
         Some(ToolContext::Yb(yb_env)) => Ok(yb_env),
@@ -131,10 +132,7 @@ pub fn require_yb_env(
     })
 }
 
-pub fn maybe_yb_env(
-    config: &Config,
-) -> YbResult<Option<YbEnv>> {
-    
+pub fn maybe_yb_env(config: &Config) -> YbResult<Option<YbEnv>> {
     determine_tool_context(config).map(|c| {
         if let Some(ToolContext::Yb(yb_env)) = c {
             Some(yb_env)

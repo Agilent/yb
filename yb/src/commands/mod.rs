@@ -12,6 +12,7 @@ use crate::commands::stream::{
     StreamAddCommand, StreamListCommand, StreamSubcommands, StreamUpdateCommand,
 };
 use crate::commands::sync::SyncCommand;
+use crate::commands::twice_bake::TwiceBakeCommand;
 use crate::commands::upgrade::UpgradeCommand;
 use crate::errors::YbResult;
 use crate::Config;
@@ -24,6 +25,7 @@ mod self_update;
 pub mod status;
 mod stream;
 mod sync;
+mod twice_bake;
 mod upgrade;
 
 #[async_trait]
@@ -43,6 +45,7 @@ pub enum Subcommands {
     Stream(StreamSubcommands),
     Activate(ActivateCommand),
     Sync(SyncCommand),
+    TwiceBake(TwiceBakeCommand),
     List(ListCommand),
     Upgrade(UpgradeCommand),
 }

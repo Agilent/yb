@@ -211,9 +211,7 @@ impl SubcommandRunner for StatusCommand {
                             subdir_lines.push(corresponding_spec_repo_message.clone());
 
                             match &corresponding_spec_repo_status {
-                                CorrespondingSpecRepoStatus::RemoteMatch(
-                                    remote_match_status,
-                                ) => {
+                                CorrespondingSpecRepoStatus::RemoteMatch(remote_match_status) => {
                                     if !repo_status.is_local_branch_tracking_correct_branch() {
                                         if !remote_match_status
                                             .local_branches_tracking_remote
@@ -226,8 +224,8 @@ impl SubcommandRunner for StatusCommand {
                                                     )).to_string(),
                                                 );
 
-                                            for branch in &remote_match_status
-                                                .local_branches_tracking_remote
+                                            for branch in
+                                                &remote_match_status.local_branches_tracking_remote
                                             {
                                                 let last_message = subdir_lines.last().unwrap();
                                                 subdir_lines.push(
@@ -263,9 +261,7 @@ impl SubcommandRunner for StatusCommand {
                                             Some(Style::from_dotted_str("red.bold"));
                                     }
                                 }
-                                CorrespondingSpecRepoStatus::RelatedRepo {
-                                    spec_repo, ..
-                                } => {
+                                CorrespondingSpecRepoStatus::RelatedRepo { spec_repo, .. } => {
                                     corresponding_spec_repo_message.set_message(
                                             Style::new().red().on_white().apply_to("\tthis repo shares commits with a spec repo, but the remote is wrong").to_string(),
                                         );
@@ -279,8 +275,7 @@ impl SubcommandRunner for StatusCommand {
                                         format!("\t\trefspec: {}", spec_repo.refspec),
                                     ));
 
-                                    branch_status_color =
-                                        Some(Style::from_dotted_str("red.bold"));
+                                    branch_status_color = Some(Style::from_dotted_str("red.bold"));
                                 }
                             }
                         }
@@ -291,12 +286,7 @@ impl SubcommandRunner for StatusCommand {
                                 let oneline = format!(
                                     "\t{} {}",
                                     Style::default().yellow().apply_to(
-                                        commit
-                                            .as_object()
-                                            .short_id()
-                                            .unwrap()
-                                            .as_str()
-                                            .unwrap()
+                                        commit.as_object().short_id().unwrap().as_str().unwrap()
                                     ),
                                     commit.summary().unwrap()
                                 );
@@ -312,8 +302,7 @@ impl SubcommandRunner for StatusCommand {
                             branch_status_color = Some(Style::from_dotted_str("red.bold"));
                         }
 
-                        for short_status in format_short_statuses(&repo_status.repo, &statuses)
-                        {
+                        for short_status in format_short_statuses(&repo_status.repo, &statuses) {
                             let last_message = subdir_lines.last().unwrap();
                             subdir_lines.push(mp.println_after(
                                 last_message,

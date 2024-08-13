@@ -150,9 +150,7 @@ impl YbEnv {
 }
 
 /// Search upwards from `start_point` for a .yb directory and load the environment if found.
-pub fn try_discover_yb_env<S: AsRef<Path>>(
-    start_point: S,
-) -> YbResult<Option<YbEnv>> {
+pub fn try_discover_yb_env<S: AsRef<Path>>(start_point: S) -> YbResult<Option<YbEnv>> {
     // Locate the hidden .yb directory
     find_dir_recurse_upwards(start_point, YB_ENV_DIRECTORY)?
         .map(|yb_dir| -> YbResult<_> {
