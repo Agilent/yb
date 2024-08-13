@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 assert_cmd = "2"
-color-eyre = "0.6.2"
+color-eyre = "0.6.3"
 tokio = "1"
 yb = { path = "../yb" }
 concurrent_git_pool = { path = "../concurrent_git_pool" }
