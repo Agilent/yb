@@ -242,7 +242,7 @@ impl SubcommandRunner for TwiceBakeCommand {
             // Iterate over each task file in the PF subdir
             for pf in pf_walker {
                 let task_glob_pattern = format!("{}/do_*.json", pf.path().to_str().unwrap());
-                mp.note(format!("PF={}", pf.file_name().to_str().unwrap()));
+                //mp.note(format!("PF={}", pf.file_name().to_str().unwrap()));
 
                 for task_file in glob::glob(&task_glob_pattern).unwrap().flatten() {
                     tracing::info!("file: {:?}", task_file);
@@ -277,6 +277,7 @@ impl SubcommandRunner for TwiceBakeCommand {
         if !self.execute {
             for entry in map.iter_by_start_time() {
                 if !entry.is_executable() {
+                    mp.warn(format!("would skip Python task {}:{}", entry.pn, entry.task));
                     continue;
                 }
 
@@ -285,20 +286,32 @@ impl SubcommandRunner for TwiceBakeCommand {
 
             mp.warn("dry run only - pass the -e/--execute flag to run tasks");
         } else {
+            enum RunOrSkip {
+                Run(PathBuf),
+                Skip(PathBuf),
+            }
+
             let mut ps = vec![];
             for entry in map.iter_by_start_time() {
-                if !entry.is_executable() {
-                    continue;
-                }
-
                 let p = entry.task_runfile().clone();
-                ps.push(p);
+                if entry.is_executable() {
+                    ps.push(RunOrSkip::Run(p));
+                } else {
+                    ps.push(RunOrSkip::Skip(p));
+                }
             }
 
             let count = ps.len();
             for (i, p) in ps.iter().enumerate() {
-                mp.note(format!("[{}/{}] running {}", i, count, p.to_str().unwrap()));
-                launch(p, mp.clone()).await.unwrap();
+                match p {
+                    RunOrSkip::Run(p) => {
+                        mp.note(format!("[{}/{}] running {}", i, count, p.to_str().unwrap()));
+                        launch(p, mp.clone()).await.unwrap();
+                    }
+                    RunOrSkip::Skip(p) => {
+                        mp.warn(format!("skipping Python task {}", p.to_str().unwrap()));
+                    }
+                }
             }
         }
 
