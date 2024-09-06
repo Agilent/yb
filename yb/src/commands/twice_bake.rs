@@ -123,20 +123,6 @@ fn find_tmpdirs<P: AsRef<Path>>(build_dir: P) -> impl Iterator<Item = DirEntry> 
             true
         })
 }
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // The usage is similar as with the standard library's `Command` type
-    let mut child = Command::new("echo")
-        .arg("hello")
-        .arg("world")
-        .spawn()
-        .expect("failed to spawn");
-
-    // Await until the command completes
-    let status = child.wait().await?;
-    println!("the command exited with: {}", status);
-    Ok(())
-}
 
 async fn launch<P: AsRef<OsStr>>(p: P, mp: MultiProgress) -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::new(p);
