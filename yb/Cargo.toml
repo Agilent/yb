@@ -1,6 +1,6 @@
 [package]
 name = "yb"
-version = "0.0.13"
+version = "0.0.14"
 authors = ["Chris Laplante <chris.laplante@agilent.com>"]
 edition = "2018"
 
