@@ -45,9 +45,9 @@ pub struct TwiceBakeCommand {
     #[clap(long, short, default_value_t = 1, id = "N", value_parser = value_parser!(u8).range(1..))]
     previous: u8,
 
-    /// By default, this command only executes tasks if they all belong to the same recipe (PN).
-    /// Pass this flag to disable that sanity check.
-    force: bool,
+    // /// By default, this command only executes tasks if they all belong to the same recipe (PN).
+    // /// Pass this flag to disable that sanity check.
+    // force: bool,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy, Deserialize)]
