@@ -1,9 +1,10 @@
+use color_eyre::Help;
+use git2::{Branch, FetchOptions, Repository, StatusOptions};
+use indoc::indoc;
+use maplit::hashset;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::{fs, io};
-
-use git2::{Branch, FetchOptions, Repository, StatusOptions};
-use maplit::hashset;
 
 use crate::config::Config;
 use crate::core::tool_context::{require_tool_context, ToolContext};
@@ -138,7 +139,15 @@ where
             fetch_options.remote_callbacks(ssh_agent_remote_callbacks());
             // TODO: this is really slow
             //fetch_options.download_tags(AutotagOption::All);
-            remote.fetch(&[] as &[&str], Some(&mut fetch_options), None)?;
+            remote
+                .fetch(&[] as &[&str], Some(&mut fetch_options), None)
+                .with_suggestion(|| {
+                    indoc! {r#"
+            Is ssh-agent configured and running? If not, you might need to run:
+                eval `ssh-agent -s`
+                ssh-add
+            "#}
+                })?;
             c(StatusCalculatorEvent::FinishFetch);
         }
 

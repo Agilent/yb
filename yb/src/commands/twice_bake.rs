@@ -1,13 +1,3 @@
-use std::collections::HashMap;
-use std::fs::File;
-use std::io::BufRead;
-use std::os::unix::fs::MetadataExt;
-use std::path::{Path, PathBuf};
-use std::pin::Pin;
-use std::process::Stdio;
-use std::time::SystemTime;
-use std::{cmp, io};
-use std::ffi::OsStr;
 use async_trait::async_trait;
 use clap::value_parser;
 use color_eyre::Help;
@@ -18,6 +8,16 @@ use multi_index_map::MultiIndexMap;
 use serde::Deserialize;
 use serde_with::TimestampSecondsWithFrac;
 use serde_with::{serde_as, DisplayFromStr};
+use std::collections::HashMap;
+use std::ffi::OsStr;
+use std::fs::File;
+use std::io::BufRead;
+use std::os::unix::fs::MetadataExt;
+use std::path::{Path, PathBuf};
+use std::pin::Pin;
+use std::process::Stdio;
+use std::time::SystemTime;
+use std::{cmp, io};
 use time::macros::format_description;
 use time::OffsetDateTime;
 use tokio::io::AsyncBufReadExt;
@@ -44,7 +44,6 @@ pub struct TwiceBakeCommand {
     /// Use the Nth most recent invocation of bitbake, rather than the most recent.
     #[clap(long, short, default_value_t = 1, id = "N", value_parser = value_parser!(u8).range(1..))]
     previous: u8,
-
     // /// By default, this command only executes tasks if they all belong to the same recipe (PN).
     // /// Pass this flag to disable that sanity check.
     // force: bool,
@@ -124,7 +123,10 @@ fn find_tmpdirs<P: AsRef<Path>>(build_dir: P) -> impl Iterator<Item = DirEntry> 
         })
 }
 
-async fn launch<P: AsRef<OsStr>>(p: P, mp: MultiProgress) -> Result<(), Box<dyn std::error::Error>> {
+async fn launch<P: AsRef<OsStr>>(
+    p: P,
+    mp: MultiProgress,
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::new(p);
 
     cmd.stdout(Stdio::piped());
@@ -263,7 +265,10 @@ impl SubcommandRunner for TwiceBakeCommand {
         if !self.execute {
             for entry in map.iter_by_start_time() {
                 if !entry.is_executable() {
-                    mp.warn(format!("would skip Python task {}:{}", entry.pn, entry.task));
+                    mp.warn(format!(
+                        "would skip Python task {}:{}",
+                        entry.pn, entry.task
+                    ));
                     continue;
                 }
 
