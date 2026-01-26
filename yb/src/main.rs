@@ -35,9 +35,9 @@ async fn main() {
 
 async fn real_main() -> Result<(), i32> {
     // Automatically enable backtracing unless user explicitly disabled it
-    if env::var("RUST_BACKTRACE").is_err() {
-        env::set_var("RUST_BACKTRACE", "1");
-    }
+    // if env::var("RUST_BACKTRACE").is_err() {
+    //     env::set_var("RUST_BACKTRACE", "1");
+    // }
 
     // Figure out what we're going to do
     let result = parse_args_and_create_config();
