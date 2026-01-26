@@ -6,25 +6,25 @@ use console::Style;
 use git2::Repository;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 
+use crate::commands::SubcommandRunner;
 use crate::commands::activate::activate_spec;
 use crate::commands::sync::actions::{
     BBLayersEditAction, CheckoutBranchSyncAction, CloneRepoSyncAction,
     CreateLocalTrackingBranchSyncAction, FastForwardPullSyncAction, ModifyBBLayersConfSyncAction,
     ResetGitWorkdirSyncAction, SyncAction,
 };
-use crate::commands::SubcommandRunner;
 use crate::config::Config;
 use crate::core::tool_context::require_yb_env;
 use crate::data_model::git::{
-    determine_optimal_checkout_branch, RemoteTrackingBranch, UpstreamComparison,
+    RemoteTrackingBranch, UpstreamComparison, determine_optimal_checkout_branch,
 };
 use crate::data_model::status::{ComputedStatusEntry, CorrespondingSpecRepoStatus};
 use crate::errors::YbResult;
-use crate::status_calculator::{compute_status, StatusCalculatorEvent, StatusCalculatorOptions};
+use crate::status_calculator::{StatusCalculatorEvent, StatusCalculatorOptions, compute_status};
 use crate::ui_ops::check_broken_streams::{
-    ui_op_check_broken_streams, UiCheckBrokenStreamsOptions,
+    UiCheckBrokenStreamsOptions, ui_op_check_broken_streams,
 };
-use crate::ui_ops::update_stream::{ui_op_update_stream, UiUpdateStreamOptions};
+use crate::ui_ops::update_stream::{UiUpdateStreamOptions, ui_op_update_stream};
 use crate::util::git;
 use crate::util::indicatif::MultiProgressHelpers;
 use concurrent_git_pool::PoolHelper;
@@ -150,7 +150,10 @@ impl SubcommandRunner for SyncCommand {
                                         ));
                                     }
                                     UpstreamComparison::Ahead(_) => {
-                                        let msg = format!("{} is ahead of remote and I don't know what to do about it", status_data.path.display());
+                                        let msg = format!(
+                                            "{} is ahead of remote and I don't know what to do about it",
+                                            status_data.path.display()
+                                        );
                                         mp.error(msg);
                                         panic!();
                                     }

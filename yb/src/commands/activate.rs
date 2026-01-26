@@ -6,7 +6,7 @@ use crate::config::Config;
 use crate::core::tool_context::require_yb_env;
 use crate::errors::YbResult;
 use crate::ui_ops::check_broken_streams::{
-    ui_op_check_broken_streams, UiCheckBrokenStreamsOptions,
+    UiCheckBrokenStreamsOptions, ui_op_check_broken_streams,
 };
 use crate::util::indicatif::MultiProgressHelpers;
 use crate::yb_env::YbEnv;

@@ -3,9 +3,9 @@
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
 use syn::parse::{Parse, ParseStream};
-use syn::{parse_macro_input, Expr, Lit, Token};
+use syn::{Expr, Lit, Token, parse_macro_input};
 
 // Example:
 // ```no_run

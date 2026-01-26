@@ -8,7 +8,7 @@ use git2::Repository;
 use crate::config::Config;
 use crate::errors::YbResult;
 use crate::util::paths::{list_subdirectories_sorted, run_which};
-use crate::yb_env::{try_discover_yb_env, YbEnv};
+use crate::yb_env::{YbEnv, try_discover_yb_env};
 
 #[derive(Debug)]
 pub enum ToolContext {

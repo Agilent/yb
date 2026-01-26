@@ -1,10 +1,10 @@
 use async_trait::async_trait;
 use indicatif::MultiProgress;
 
+use crate::Config;
 use crate::commands::SubcommandRunner;
 use crate::errors::YbResult;
-use crate::ui_ops::update_stream::{ui_op_update_stream, UiUpdateStreamOptions};
-use crate::Config;
+use crate::ui_ops::update_stream::{UiUpdateStreamOptions, ui_op_update_stream};
 
 #[derive(Debug, clap::Parser)]
 pub struct StreamUpdateCommand {}

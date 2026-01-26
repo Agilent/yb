@@ -7,7 +7,7 @@ use itertools::Itertools;
 use multi_index_map::MultiIndexMap;
 use serde::Deserialize;
 use serde_with::TimestampSecondsWithFrac;
-use serde_with::{serde_as, DisplayFromStr};
+use serde_with::{DisplayFromStr, serde_as};
 use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::fs::File;
@@ -18,8 +18,8 @@ use std::pin::Pin;
 use std::process::Stdio;
 use std::time::SystemTime;
 use std::{cmp, io};
-use time::macros::format_description;
 use time::OffsetDateTime;
+use time::macros::format_description;
 use tokio::io::AsyncBufReadExt;
 use tokio::process::Command;
 use tokio_stream::wrappers::LinesStream;
@@ -27,11 +27,11 @@ use tokio_stream::{Stream, StreamExt, StreamMap};
 use tracing::info_span;
 use walkdir::{DirEntry, WalkDir};
 
+use crate::Config;
 use crate::commands::SubcommandRunner;
 use crate::core::tool_context::require_tool_context;
 use crate::errors::YbResult;
 use crate::util::indicatif::MultiProgressHelpers;
-use crate::Config;
 
 /// Re-execute the most recent task(s) (by default) that BitBake ran.
 #[derive(Debug, clap::Parser)]

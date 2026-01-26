@@ -1,9 +1,9 @@
+use crate::Config;
 use crate::core::tool_context::maybe_yb_env;
 use crate::errors::YbResult;
-use crate::ops::update_stream::{op_update_stream, UpdateStreamOptions};
+use crate::ops::update_stream::{UpdateStreamOptions, op_update_stream};
 use crate::util::indicatif::MultiProgressHelpers;
 use crate::yb_env::ActiveSpecStatus;
-use crate::Config;
 use dialoguer::Confirm;
 use indicatif::MultiProgress;
 

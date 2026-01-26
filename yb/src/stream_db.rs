@@ -3,7 +3,7 @@ use crate::spec::{ActiveSpec, Spec};
 use crate::stream::Stream;
 use crate::util::paths::is_hidden;
 use eyre::Context;
-use slotmap::{new_key_type, SlotMap};
+use slotmap::{SlotMap, new_key_type};
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::{Path, PathBuf};
@@ -120,7 +120,11 @@ impl StreamDb {
 
         if let Some(stream) = self.get_stream_by_name(&active_spec.from_stream) {
             if stream.get_spec_by_name(active_spec.name()).is_none() {
-                eyre::bail!("active spec '{}' claims to be a member of stream '{}', but it was not found there", active_spec.name(), active_spec.from_stream);
+                eyre::bail!(
+                    "active spec '{}' claims to be a member of stream '{}', but it was not found there",
+                    active_spec.name(),
+                    active_spec.from_stream
+                );
             }
 
             active_spec.stream_key = stream.key();

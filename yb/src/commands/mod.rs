@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use enum_dispatch::enum_dispatch;
 use indicatif::MultiProgress;
 
+use crate::Config;
 use crate::commands::activate::ActivateCommand;
 use crate::commands::init::InitCommand;
 use crate::commands::list::ListCommand;
@@ -15,7 +16,6 @@ use crate::commands::sync::SyncCommand;
 use crate::commands::twice_bake::TwiceBakeCommand;
 use crate::commands::upgrade::UpgradeCommand;
 use crate::errors::YbResult;
-use crate::Config;
 
 mod activate;
 mod init;

@@ -1,4 +1,4 @@
-use console::{strip_ansi_codes, Style};
+use console::{Style, strip_ansi_codes};
 use indicatif::{MultiProgress, ProgressBar, ProgressFinish, ProgressStyle};
 
 use std::borrow::Cow;

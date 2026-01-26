@@ -2,12 +2,12 @@ use async_trait::async_trait;
 use color_eyre::Help;
 use indicatif::MultiProgress;
 
-use crate::commands::SubcommandRunner;
-use crate::core::tool_context::{determine_tool_context, require_yb_env, ToolContext};
-use crate::errors::YbResult;
-use crate::ops::add_stream::{op_add_stream, AddStreamOptions};
-use crate::yb_env::YbEnv;
 use crate::Config;
+use crate::commands::SubcommandRunner;
+use crate::core::tool_context::{ToolContext, determine_tool_context, require_yb_env};
+use crate::errors::YbResult;
+use crate::ops::add_stream::{AddStreamOptions, op_add_stream};
+use crate::yb_env::YbEnv;
 
 /// Create a 'yb' environment within an activated Yocto environment
 ///

@@ -55,7 +55,7 @@ impl YbConf {
 
 #[cfg(test)]
 mod test {
-    use crate::yb_conf::{YbConf, YB_CONF_FORMAT_VERSION};
+    use crate::yb_conf::{YB_CONF_FORMAT_VERSION, YbConf};
 
     #[test]
     fn fake_version_1_handling() {

@@ -6,11 +6,11 @@ use console::Style;
 use eyre::Context;
 use indicatif::MultiProgress;
 
+use crate::Config;
 use crate::commands::SubcommandRunner;
 use crate::core::tool_context::require_tool_context;
 use crate::errors::YbResult;
 use crate::util::paths::make_relative_to_cwd;
-use crate::Config;
 
 /// Run a command on each top-level layer repository. Works like 'mr run'.
 #[derive(Debug, clap::Parser)]

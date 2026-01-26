@@ -1,5 +1,5 @@
-use crate::commands::Subcommands;
 use crate::VERSION;
+use crate::commands::Subcommands;
 
 #[derive(clap::Parser, Debug)]
 #[clap(name = "yb", about = "Yocto buddy", version = VERSION)]

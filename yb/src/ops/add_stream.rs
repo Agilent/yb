@@ -4,15 +4,15 @@ use std::fs;
 use std::fs::OpenOptions;
 use std::path::PathBuf;
 
-use git2::build::RepoBuilder;
 use git2::FetchOptions;
+use git2::build::RepoBuilder;
 use tempfile::Builder;
 
 use crate::config::Config;
 use crate::core::tool_context::require_yb_env;
 use crate::errors::YbResult;
 use crate::stream::{
-    Stream, StreamConfig, StreamKind, STREAM_CONFIG_FILE, STREAM_CONTENT_ROOT_SUBDIR,
+    STREAM_CONFIG_FILE, STREAM_CONTENT_ROOT_SUBDIR, Stream, StreamConfig, StreamKind,
 };
 use crate::stream_db::StreamKey;
 use crate::util::git::ssh_agent_remote_callbacks;

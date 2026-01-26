@@ -7,15 +7,15 @@ use std::path::{Path, PathBuf};
 use std::{fs, io};
 
 use crate::config::Config;
-use crate::core::tool_context::{require_tool_context, ToolContext};
+use crate::core::tool_context::{ToolContext, require_tool_context};
+use crate::data_model::Layer;
 use crate::data_model::git::{
     BranchStatus, RemoteTrackingBranch, UpstreamBranchStatus, UpstreamComparison,
 };
 use crate::data_model::status::{
-    find_corresponding_spec_repo_for_repo, ComputedStatus, ComputedStatusEntry, MissingRepo,
-    OnDiskNonRepoStatus, OnDiskRepoStatus,
+    ComputedStatus, ComputedStatusEntry, MissingRepo, OnDiskNonRepoStatus, OnDiskRepoStatus,
+    find_corresponding_spec_repo_for_repo,
 };
-use crate::data_model::Layer;
 use crate::errors::YbResult;
 use crate::spec::SpecRepo;
 use crate::status_calculator::bblayers_manager::read_bblayers;

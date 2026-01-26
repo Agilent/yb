@@ -4,11 +4,11 @@ use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
 use std::path::{Path, PathBuf};
 
+use crate::data_model::Layer;
 use crate::data_model::git::{
     BranchStatus, LocalTrackingBranch, LocalTrackingBranchWithUpstreamComparison,
     RemoteTrackingBranch,
 };
-use crate::data_model::Layer;
 use git2::{Branch, BranchType, Oid, Repository};
 use itertools::Itertools;
 use serde::Serialize;
@@ -16,7 +16,7 @@ use tempfile::TempDir;
 
 use crate::errors::YbResult;
 use crate::spec::{ActiveSpec, SpecRepo};
-use crate::status_calculator::{compare_branch_to_remote_tracking_branch, StatusCalculatorEvent};
+use crate::status_calculator::{StatusCalculatorEvent, compare_branch_to_remote_tracking_branch};
 
 use crate::util::git::get_remote_tracking_branch;
 

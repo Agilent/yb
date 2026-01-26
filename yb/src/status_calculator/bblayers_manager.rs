@@ -5,11 +5,11 @@ use std::io::Read;
 use std::path::PathBuf;
 
 use crate::data_model::Layer;
-use bytebraise::data_smart::variable_contents::VariableContentsAccessors;
 use bytebraise::data_smart::DataSmart;
+use bytebraise::data_smart::variable_contents::VariableContentsAccessors;
 use bytebraise::parser::parse_bitbake_from_str;
-use bytebraise::syntax::ast::evaluate::Evaluate;
 use bytebraise::syntax::ast::AstNode;
+use bytebraise::syntax::ast::evaluate::Evaluate;
 
 use crate::errors::YbResult;
 use crate::util::paths::normalize_path;

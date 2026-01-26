@@ -5,15 +5,15 @@ use console::{Emoji, Style};
 use git2::StatusOptions;
 use indicatif::{MultiProgress, ProgressBar, ProgressFinish, ProgressStyle};
 
+use crate::Config;
 use crate::commands::SubcommandRunner;
 use crate::data_model::git::{BranchStatus, UpstreamComparison};
 use crate::data_model::status::{ComputedStatusEntry, CorrespondingSpecRepoStatus};
 use crate::errors::YbResult;
-use crate::status_calculator::{compute_status, StatusCalculatorEvent, StatusCalculatorOptions};
-use crate::ui_ops::update_stream::{ui_op_update_stream, UiUpdateStreamOptions};
+use crate::status_calculator::{StatusCalculatorEvent, StatusCalculatorOptions, compute_status};
+use crate::ui_ops::update_stream::{UiUpdateStreamOptions, ui_op_update_stream};
 use crate::util::git::format_short_statuses;
 use crate::util::indicatif::{IndicatifHelpers, MultiProgressHelpers};
-use crate::Config;
 
 #[derive(Debug, clap::Parser)]
 pub struct StatusCommand {
@@ -80,7 +80,7 @@ fn format_upstream_status_message(branch_status: &BranchStatus) -> Option<Upstre
 }
 
 use crate::ui_ops::check_broken_streams::{
-    ui_op_check_broken_streams, UiCheckBrokenStreamsOptions,
+    UiCheckBrokenStreamsOptions, ui_op_check_broken_streams,
 };
 use lazy_static::lazy_static;
 

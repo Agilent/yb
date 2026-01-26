@@ -65,9 +65,9 @@ async fn real_main() -> Result<(), i32> {
 
 fn install_tracing(level: Level, mp: MultiProgress) {
     use tracing_error::ErrorLayer;
+    use tracing_subscriber::EnvFilter;
     use tracing_subscriber::fmt;
     use tracing_subscriber::prelude::*;
-    use tracing_subscriber::EnvFilter;
 
     let fmt_layer = fmt::layer()
         .with_target(false)

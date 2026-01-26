@@ -1,12 +1,12 @@
 use async_trait::async_trait;
-use self_update::{cargo_crate_version, Status};
+use self_update::{Status, cargo_crate_version};
 
 use indicatif::MultiProgress;
 
+use crate::Config;
 use crate::commands::SubcommandRunner;
 use crate::errors::YbResult;
 use crate::util::indicatif::MultiProgressHelpers;
-use crate::Config;
 
 /// Automatically download the latest version of yb
 #[derive(Debug, clap::Parser)]

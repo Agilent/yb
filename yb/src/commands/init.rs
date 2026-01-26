@@ -3,14 +3,14 @@ use color_eyre::Help;
 use indicatif::MultiProgress;
 use std::fs;
 
+use crate::Config;
 use crate::commands::SubcommandRunner;
 use crate::core::tool_context::{
-    determine_tool_context, require_yb_env, ToolContext, YoctoEnvironment,
+    ToolContext, YoctoEnvironment, determine_tool_context, require_yb_env,
 };
 use crate::errors::YbResult;
-use crate::ops::add_stream::{op_add_stream, AddStreamOptions};
+use crate::ops::add_stream::{AddStreamOptions, op_add_stream};
 use crate::yb_env::YbEnv;
-use crate::Config;
 
 /// Initialize a 'yb' environment
 ///

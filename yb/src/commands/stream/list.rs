@@ -1,11 +1,11 @@
 use async_trait::async_trait;
 use indicatif::MultiProgress;
 
+use crate::Config;
 use crate::commands::SubcommandRunner;
 use crate::core::tool_context::require_yb_env;
 use crate::errors::YbResult;
 use crate::util::paths::list_subdirectories_sorted;
-use crate::Config;
 
 #[derive(Debug, clap::Parser)]
 pub struct StreamListCommand {}
