@@ -57,7 +57,7 @@ impl BranchStatus {
     pub fn is_diverged(&self) -> bool {
         self.upstream_branch_status
             .as_ref()
-            .map_or(false, |s| s.upstream_comparison.is_diverged())
+            .is_some_and(|s| s.upstream_comparison.is_diverged())
     }
 }
 

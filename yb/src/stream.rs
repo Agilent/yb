@@ -173,7 +173,7 @@ impl Stream {
         }
     }
 
-    pub fn specs<'a>(&'a self) -> Box<dyn Iterator<Item = (&String, &Spec)> + 'a> {
+    pub fn specs<'a>(&'a self) -> Box<dyn Iterator<Item = (&'a String, &'a Spec)> + 'a> {
         match &self.specs {
             StreamSpecs::Loaded(specs) => Box::new(specs.iter()),
             StreamSpecs::Broken(..) => Box::new(std::iter::empty()),

@@ -10,10 +10,10 @@ use crate::errors::YbResult;
 
 pub fn run_which(program_name: &str) -> YbResult<Option<PathBuf>> {
     let output = Command::new("which").arg(program_name).output()?;
-    return Ok(match output.status.code() {
+    Ok(match output.status.code() {
         Some(0) => Some(PathBuf::from(String::from_utf8(output.stdout)?.trim_end())),
         _ => None,
-    });
+    })
 }
 
 pub fn make_relative_to_cwd<P: ?Sized>(path: &P) -> YbResult<PathBuf>
@@ -67,7 +67,7 @@ pub fn is_hidden(entry: &DirEntry) -> bool {
 /// This function ensures a given path ending with '/' still
 /// ends with '/' after normalization.
 pub fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
-    let ends_with_slash = path.as_ref().to_str().map_or(false, |s| s.ends_with('/'));
+    let ends_with_slash = path.as_ref().to_str().is_some_and(|s| s.ends_with('/'));
     let mut normalized = PathBuf::new();
     for component in path.as_ref().components() {
         match &component {

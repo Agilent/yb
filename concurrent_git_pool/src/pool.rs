@@ -96,7 +96,7 @@ impl Pool {
         let mut cache = self.cache.lock().await;
         match cache.entry(remote.clone()) {
             Entry::Occupied(entry) => {
-                return match entry.get().clone() {
+                match entry.get().clone() {
                     // Repo is already on-disk
                     CacheEntry::Available(p) => p,
                     CacheEntry::Cloning(future) => {
@@ -104,7 +104,7 @@ impl Pool {
                         // Clone is in-flight
                         future.await
                     }
-                };
+                }
             }
             Entry::Vacant(entry) => {
                 let request = clone_repo(root, remote.clone(), dest_dir_name)

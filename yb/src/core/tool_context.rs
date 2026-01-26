@@ -85,11 +85,10 @@ pub fn determine_tool_context(config: &Config) -> YbResult<Option<ToolContext>> 
     match (&bbpath, &poky_layer_maybe, &sources_dir) {
         (Some(build_dir), Some(poky_layer), Some(sources_dir)) => {
             // Check for bare Poky environments
-            if let Some(build_dir_parent) = &build_dir.parent().map(Path::to_path_buf) {
-                if poky_layer == build_dir_parent {
+            if let Some(build_dir_parent) = &build_dir.parent().map(Path::to_path_buf)
+                && poky_layer == build_dir_parent {
                     eyre::bail!("Bare poky environments are not supported");
                 }
-            }
 
             return Ok(Some(ToolContext::YoctoEnv(YoctoEnvironment {
                 sources_dir: sources_dir.clone(),

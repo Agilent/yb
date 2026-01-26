@@ -14,7 +14,7 @@ use git2::{
 
 use crate::errors::YbResult;
 
-pub fn get_current_local_branch(repo: &Repository) -> YbResult<Branch> {
+pub fn get_current_local_branch(repo: &Repository) -> YbResult<Branch<'_>> {
     match repo.head() {
         Ok(head) => Ok(Branch::wrap(head)),
         Err(ref e) if e.code() == ErrorCode::UnbornBranch /*|| e.code() == ErrorCode::NotFound*/ => {
@@ -72,7 +72,7 @@ pub fn get_remote_name_for_current_branch(repo: &Repository) -> YbResult<Option<
     }
 }
 
-pub fn get_remote_for_current_branch(repo: &Repository) -> YbResult<Option<Remote>> {
+pub fn get_remote_for_current_branch(repo: &Repository) -> YbResult<Option<Remote<'_>>> {
     get_remote_name_for_current_branch(repo)?
         .map(|n| repo.find_remote(&n))
         .transpose()

@@ -31,7 +31,7 @@ pub struct ComputedStatus {
 }
 
 impl ComputedStatus {
-    pub fn active_spec_repos(&self) -> Option<ActiveSpecRepos> {
+    pub fn active_spec_repos(&self) -> Option<ActiveSpecRepos<'_>> {
         let active_spec = self.active_spec.as_ref()?;
         Some(ActiveSpecRepos {
             active_spec_repos: active_spec.spec.repos.iter(),
@@ -42,8 +42,8 @@ impl ComputedStatus {
     pub fn spec_requested_layers(&self) -> HashSet<Layer> {
         let mut spec_requested_layers = HashSet::new();
         for entry in &self.source_dirs {
-            if let ComputedStatusEntry::OnDiskRepo(repo) = entry {
-                if let Some(CorrespondingSpecRepoStatus::RemoteMatch(remote_match_status)) =
+            if let ComputedStatusEntry::OnDiskRepo(repo) = entry
+                && let Some(CorrespondingSpecRepoStatus::RemoteMatch(remote_match_status)) =
                     &repo.corresponding_spec_repo
                 {
                     spec_requested_layers.extend(
@@ -53,7 +53,6 @@ impl ComputedStatus {
                             .unwrap_or_default(),
                     );
                 }
-            }
         }
 
         spec_requested_layers
@@ -216,7 +215,7 @@ pub fn find_local_branches_tracking_remote_branch(
         .filter(|branch| {
             get_remote_tracking_branch(branch)
                 .unwrap()
-                .map_or(false, |b| b == *remote_tracking_branch)
+                .is_some_and(|b| b == *remote_tracking_branch)
         })
         .map(|branch| {
             let branch_name = branch.name().unwrap().unwrap().to_string();

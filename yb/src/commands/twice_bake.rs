@@ -150,13 +150,13 @@ async fn launch<P: AsRef<OsStr>>(
     // Ensure the child process is spawned in the runtime so it can
     // make progress on its own while we await for any output.
     let join_handle = tokio::spawn(async move {
-        let status = child
-            .wait()
-            .await
-            .expect("child process encountered an error");
+        
 
         //println!("child status was: {}", status);
-        status
+        child
+            .wait()
+            .await
+            .expect("child process encountered an error")
     });
 
     while let Some(line) = map.next().await {

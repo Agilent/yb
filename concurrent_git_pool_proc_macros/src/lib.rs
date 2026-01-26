@@ -51,7 +51,7 @@ impl Parse for ExprOrLit {
         if let Ok(expr) = input.parse::<Expr>() {
             Ok(ExprOrLit::Expr(expr))
         } else if input.peek(Lit) {
-            return Ok(ExprOrLit::Lit(input.parse().unwrap()));
+            Ok(ExprOrLit::Lit(input.parse().unwrap()))
         } else {
             unimplemented!();
         }
