@@ -1,8 +1,3 @@
-#![feature(result_flattening)]
-#![feature(entry_insert)]
-#![feature(assert_matches)]
-#![feature(try_find)]
-#![feature(async_closure)]
 #![feature(exit_status_error)]
 
 pub use config::Config;
