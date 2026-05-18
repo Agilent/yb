@@ -37,7 +37,10 @@ async fn main() -> io::Result<()> {
         // the generated World trait.
         .map(|channel| {
             let server = Server::new(cache.clone());
-            channel.execute(server.serve())
+            channel.execute(server.serve()).for_each(|spawned_task| {
+                tokio::spawn(spawned_task);
+                future::ready(())
+            })
         })
         // Max 10 channels.
         .buffer_unordered(10)

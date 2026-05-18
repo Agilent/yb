@@ -10,7 +10,6 @@ pub struct Server {
     cache: Arc<Pool>,
 }
 
-#[tarpc::server]
 impl Service for Server {
     async fn lookup_or_clone(self, _: Context, uri: String) -> ServiceResult<PathBuf> {
         self.cache.lookup_or_clone(uri).await
