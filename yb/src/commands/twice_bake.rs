@@ -11,7 +11,6 @@ use serde_with::{DisplayFromStr, serde_as};
 use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::fs::File;
-use std::io::BufRead;
 use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
