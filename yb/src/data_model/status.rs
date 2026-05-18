@@ -45,14 +45,14 @@ impl ComputedStatus {
             if let ComputedStatusEntry::OnDiskRepo(repo) = entry
                 && let Some(CorrespondingSpecRepoStatus::RemoteMatch(remote_match_status)) =
                     &repo.corresponding_spec_repo
-                {
-                    spec_requested_layers.extend(
-                        remote_match_status
-                            .spec_repo
-                            .resolved_layers(repo.path.clone())
-                            .unwrap_or_default(),
-                    );
-                }
+            {
+                spec_requested_layers.extend(
+                    remote_match_status
+                        .spec_repo
+                        .resolved_layers(repo.path.clone())
+                        .unwrap_or_default(),
+                );
+            }
         }
 
         spec_requested_layers
