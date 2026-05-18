@@ -84,7 +84,7 @@ impl SubcommandRunner for UpgradeCommand {
                 if let Some(spec) = spec {
                     // TODO don't clone
                     yb_env.activate_spec(spec)?;
-                    println!("Activated spec '{}'", &default_spec_name);
+                    println!("Activated spec '{}'", default_spec_name);
                 } else {
                     eyre::bail!("spec with name '{}' not found", &default_spec_name);
                 }

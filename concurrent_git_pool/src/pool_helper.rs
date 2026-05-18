@@ -10,7 +10,7 @@ pub struct PoolHelper {
 impl PoolHelper {
     pub async fn connect_or_local() -> anyhow::Result<Self> {
         if let Ok(var) = std::env::var("CONCURRENT_GIT_POOL") {
-            eprintln!("connecting to: {}", &var);
+            eprintln!("connecting to: {}", var);
             return Ok(Self {
                 inner: Some(Client::connect(var).await?),
             });
@@ -27,7 +27,7 @@ impl PoolHelper {
     ) -> Result<ServiceResult<()>, RpcError> {
         if let Some(inner) = &self.inner {
             let uri = uri.into();
-            eprintln!("cloning: {}", &uri);
+            eprintln!("cloning: {}", uri);
             let ret = inner.clone_in(uri, parent_dir, directory).await;
             dbg!(&ret);
             return ret;

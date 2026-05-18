@@ -99,7 +99,7 @@ pub fn find_dir_recurse_upwards<S: AsRef<Path>>(
     while let Some(root) = &dir {
         let metadata = root
             .metadata()
-            .with_context(|| format!("couldn't get fs metadata for {:?}", &dir))?;
+            .with_context(|| format!("couldn't get fs metadata for {:?}", dir))?;
 
         // Don't cross filesystems
         if metadata.st_dev() != st_dev {
@@ -110,7 +110,7 @@ pub fn find_dir_recurse_upwards<S: AsRef<Path>>(
         match candidate.metadata() {
             Ok(yb_dir_metadata) if yb_dir_metadata.is_dir() => return Ok(Some(candidate)),
             Err(e) if e.kind() != io::ErrorKind::NotFound => {
-                Err(e).with_context(|| format!("couldn't get fs metadata for {:?}", &candidate))?
+                Err(e).with_context(|| format!("couldn't get fs metadata for {:?}", candidate))?
             }
             _ => {
                 dir = root.parent();

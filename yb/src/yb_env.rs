@@ -130,7 +130,7 @@ impl YbEnv {
     ) -> YbResult<YbEnv> {
         // TODO: create in temp directory then move over?
         let yb_dir = location.into().join(YB_ENV_DIRECTORY);
-        println!("creating at {:?}", &yb_dir);
+        println!("creating at {:?}", yb_dir);
         fs::create_dir(&yb_dir)?;
 
         // Create a default yb.yaml file and write it to disk

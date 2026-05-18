@@ -43,7 +43,7 @@ pub fn ui_op_check_broken_streams(options: UiCheckBrokenStreamsOptions) -> YbRes
             .mp
             .warn("one or more streams are broken, so the active spec could not be loaded");
         options.mp.note("error information follows below:");
-        options.mp.suspend(|| eprintln!("{:?}", &broken));
+        options.mp.suspend(|| eprintln!("{:?}", broken));
         options.mp.println("")?;
         options
             .mp

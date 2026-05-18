@@ -114,7 +114,7 @@ impl StreamDb {
             .with_context(|| {
                 format!(
                     "failed to parse active spec file {}",
-                    &active_spec_file_path.display()
+                    active_spec_file_path.display()
                 )
             })?;
 

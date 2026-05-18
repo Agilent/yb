@@ -109,7 +109,7 @@ impl SubcommandRunner for SyncCommand {
 
             if let ComputedStatusEntry::OnDiskRepo(status_data) = status_data {
                 if !status_data.has_corresponding_spec_repo() {
-                    println!("skipped {:?}", &subdir);
+                    println!("skipped {:?}", subdir);
                     continue;
                 }
 

@@ -82,7 +82,7 @@ impl SubcommandRunner for InitCommand {
                 let yb_env = YbEnv::initialize(&yocto_dir, &new_yocto_env)?;
                 println!(
                     "created skeleton Yocto environment at {:?}, yb env at {:?}",
-                    &yocto_dir, yb_env
+                    yocto_dir, yb_env
                 );
             }
         };
@@ -102,7 +102,7 @@ impl SubcommandRunner for InitCommand {
                 if let Some(spec) = spec {
                     // TODO don't clone
                     yb_env.activate_spec(spec)?;
-                    println!("Activated spec '{}'", &default_spec_name);
+                    println!("Activated spec '{}'", default_spec_name);
                 } else {
                     eyre::bail!("spec with name '{}' not found", &default_spec_name);
                 }

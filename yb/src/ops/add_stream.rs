@@ -77,13 +77,13 @@ pub fn op_add_stream(options: AddStreamOptions) -> YbResult<()> {
         .open(&config_file_path)
         .context(format!(
             "failed to open file {:?} for writing",
-            &config_file_path
+            config_file_path
         ))?;
     serde_yaml::to_writer(f, &config)?;
 
     let stream_dir = yb_env.streams_dir();
     if !stream_dir.is_dir() {
-        println!("creating dir: {:?}", &stream_dir);
+        println!("creating dir: {:?}", stream_dir);
         fs::create_dir(&stream_dir)?;
     }
 
@@ -102,7 +102,7 @@ pub fn op_add_stream(options: AddStreamOptions) -> YbResult<()> {
     mv_cmd.arg(tmpdir.into_path()).arg(&stream_root_dir);
     mv_cmd.assert().success();
 
-    println!("yb {:?}", &yb_env);
+    println!("yb {:?}", yb_env);
 
     Ok(())
 }

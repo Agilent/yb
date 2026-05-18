@@ -40,7 +40,7 @@ pub fn activate_spec(yb_env: &mut YbEnv, name: &str) -> YbResult<()> {
     if let Some(spec) = spec {
         // TODO don't clone
         yb_env.activate_spec(spec)?;
-        println!("Activated spec '{}'", &name);
+        println!("Activated spec '{}'", name);
     } else {
         eyre::bail!("spec with name '{}' not found", &name);
     }

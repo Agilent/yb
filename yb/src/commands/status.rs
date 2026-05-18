@@ -183,7 +183,7 @@ impl SubcommandRunner for StatusCommand {
                             subdir_spinner.as_ref().unwrap(),
                             format!(
                                 "\ton branch '{}'",
-                                &repo_status.current_branch_status.local_branch_name
+                                repo_status.current_branch_status.local_branch_name
                             ),
                         );
                         subdir_lines.push(on_branch_message.clone());
