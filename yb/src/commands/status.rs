@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use std::sync::LazyLock;
 use std::time::Duration;
 
 use console::{Emoji, Style};
@@ -11,6 +12,9 @@ use crate::data_model::git::{BranchStatus, UpstreamComparison};
 use crate::data_model::status::{ComputedStatusEntry, CorrespondingSpecRepoStatus};
 use crate::errors::YbResult;
 use crate::status_calculator::{StatusCalculatorEvent, StatusCalculatorOptions, compute_status};
+use crate::ui_ops::check_broken_streams::{
+    UiCheckBrokenStreamsOptions, ui_op_check_broken_streams,
+};
 use crate::ui_ops::update_stream::{UiUpdateStreamOptions, ui_op_update_stream};
 use crate::util::git::format_short_statuses;
 use crate::util::indicatif::{IndicatifHelpers, MultiProgressHelpers};
@@ -79,21 +83,14 @@ fn format_upstream_status_message(branch_status: &BranchStatus) -> Option<Upstre
     })
 }
 
-use crate::ui_ops::check_broken_streams::{
-    UiCheckBrokenStreamsOptions, ui_op_check_broken_streams,
-};
-use lazy_static::lazy_static;
-
-lazy_static! {
-    pub static ref SPINNER_STRINGS: Vec<String> = {
-        let mut chars = "⠁⠁⠉⠙⠚⠒⠂⠂⠒⠲⠴⠤⠄⠄⠤⠠⠠⠤⠦⠖⠒⠐⠐⠒⠓⠋⠉⠈⠈"
-            .chars()
-            .map(|c| format!("{c} "))
-            .collect::<Vec<_>>();
-        chars.push(String::new());
-        chars
-    };
-}
+static SPINNER_STRINGS: LazyLock<Vec<String>> = LazyLock::new(|| {
+    let mut chars = "⠁⠁⠉⠙⠚⠒⠂⠂⠒⠲⠴⠤⠄⠄⠤⠠⠠⠤⠦⠖⠒⠐⠐⠒⠓⠋⠉⠈⠈"
+        .chars()
+        .map(|c| format!("{c} "))
+        .collect::<Vec<_>>();
+    chars.push(String::new());
+    chars
+});
 
 #[async_trait]
 impl SubcommandRunner for StatusCommand {

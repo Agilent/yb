@@ -3647,7 +3647,6 @@ dependencies = [
  "indicatif",
  "indoc",
  "itertools 0.13.0",
- "lazy_static",
  "maplit",
  "multi_index_map",
  "openssl-sys",
