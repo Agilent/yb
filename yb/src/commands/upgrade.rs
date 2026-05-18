@@ -35,10 +35,10 @@ impl SubcommandRunner for UpgradeCommand {
 
         match context {
             Some(ToolContext::Yb(yb_env)) => {
-                return Err(eyre::eyre!(
+                eyre::bail!(
                     "a .yb environment already exists at {:?}",
                     yb_env.root_dir()
-                ));
+                );
             }
             Some(ToolContext::YoctoEnv(context2)) => {
                 // An activated Yocto environment
@@ -55,11 +55,8 @@ impl SubcommandRunner for UpgradeCommand {
                     );
                 }
 
-                let new_context = ToolContext::Yb(YbEnv::initialize(target, &context2)?);
-                match &new_context {
-                    ToolContext::Yb(yb_env) => println!("initialized yb env at {yb_env:?}"),
-                    _ => panic!(""),
-                };
+                let yb_env = YbEnv::initialize(target, &context2)?;
+                println!("initialized yb env at {yb_env:?}");
             }
             None => {
                 return Err(eyre::eyre!(
