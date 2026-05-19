@@ -295,7 +295,7 @@ pub fn enumerate_repo_remotes(repo: &Repository) -> YbResult<HashMap<String, Str
     let remotes: Vec<_> = remote_names
         .iter()
         .map(|remote_name| -> YbResult<_> {
-            let remote_name = remote_name.unwrap(); // assume utf-8
+            let remote_name = remote_name.unwrap().unwrap(); // assume utf-8
             Ok((remote_name, repo.find_remote(remote_name)?))
         })
         .try_collect()?;
@@ -305,6 +305,7 @@ pub fn enumerate_repo_remotes(repo: &Repository) -> YbResult<HashMap<String, Str
         .filter_map(|(remote_name, remote)| {
             remote
                 .url()
+                .ok()
                 .map(|remote_url| (remote_name.to_string(), remote_url.to_string()))
         })
         .collect())

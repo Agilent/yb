@@ -19,7 +19,7 @@ coredump = "0.1.2"
 dialoguer = "0.11.0"
 enum_dispatch = "0.3.13"
 eyre = "0.6.12"
-git2 = "0.19.0"
+git2 = "0.21.0"
 glob = "0.3.1"
 indoc = "2.0.5"
 indicatif = { version = "0.17.8", features = ["improved_unicode"] }

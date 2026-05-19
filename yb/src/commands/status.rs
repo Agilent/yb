@@ -282,7 +282,7 @@ impl SubcommandRunner for StatusCommand {
                                 Style::default().yellow().apply_to(
                                     commit.as_object().short_id().unwrap().as_str().unwrap()
                                 ),
-                                commit.summary().unwrap()
+                                commit.summary().unwrap().unwrap_or_default()
                             );
 
                             let last_message = subdir_lines.last().unwrap();

@@ -58,14 +58,14 @@ pub fn get_remote_name_for_current_branch(repo: &Repository) -> YbResult<Option<
     let branch_ref_name = branch
         .into_reference()
         .name()
-        .ok_or_else(|| eyre!("branch has no name"))?
+        .map_err(|_| eyre!("branch has no name"))?
         .to_string();
 
     match repo.branch_upstream_remote(&branch_ref_name) {
         Err(ref e) if e.code() == ErrorCode::NotFound => Ok(None),
         Ok(name) => Ok(Some(
             name.as_str()
-                .ok_or_else(|| eyre!("couldn't get branch name from reference"))?
+                .map_err(|_| eyre!("couldn't get branch name from reference"))?
                 .to_string(),
         )),
         Err(e) => Err(e.into()),
@@ -225,8 +225,8 @@ fn fast_forward(
     rc: &git2::AnnotatedCommit,
 ) -> Result<(), git2::Error> {
     let name = match lb.name() {
-        Some(s) => s.to_string(),
-        None => String::from_utf8_lossy(lb.name_bytes()).to_string(),
+        Ok(s) => s.to_string(),
+        Err(_) => String::from_utf8_lossy(lb.name_bytes()).to_string(),
     };
     let msg = format!("Fast-Forward: Setting {} to id: {}", name, rc.id());
     println!("{msg}");
