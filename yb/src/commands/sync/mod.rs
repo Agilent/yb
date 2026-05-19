@@ -229,8 +229,8 @@ impl SubcommandRunner for SyncCommand {
 
             // TODO add action to temporary clone the repo and precheck that the expected layers
             //  actually exist?
-            for layer in repo.spec_repo.resolved_layers(dest) {
-                for layer in layer {
+            if let Some(layers) = repo.spec_repo.resolved_layers(dest) {
+                for layer in layers {
                     sync_actions.push(Box::new(ModifyBBLayersConfSyncAction::new(
                         layer.path,
                         status.bblayers_path.clone(),
