@@ -2,7 +2,7 @@ use eyre::WrapErr;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::Read;
-use std::path::PathBuf;
+use std::path::Path;
 
 use crate::data_model::Layer;
 use bytebraise::data_smart::DataSmart;
@@ -18,8 +18,8 @@ pub struct BBLayersManager {}
 
 impl BBLayersManager {}
 
-pub fn read_bblayers(build_dir: &PathBuf) -> YbResult<HashSet<Layer>> {
-    let bblayers = build_dir.join("conf").join("bblayers.conf");
+pub fn read_bblayers<P: AsRef<Path>>(build_dir: P) -> YbResult<HashSet<Layer>> {
+    let bblayers = build_dir.as_ref().join("conf").join("bblayers.conf");
 
     if bblayers.is_file() {
         let mut source = String::new();

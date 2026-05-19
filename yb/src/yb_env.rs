@@ -138,6 +138,7 @@ impl YbEnv {
         let f = OpenOptions::new()
             .write(true)
             .create(true)
+            .truncate(true)
             .open(yb_dir.join(YB_CONF_FILE))?;
         serde_yaml::to_writer(f, &conf)?;
 

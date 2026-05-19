@@ -52,20 +52,19 @@ pub fn ui_op_update_stream(options: UiUpdateStreamOptions) -> YbResult<()> {
     };
 
     let active_spec_status = yb_env.active_spec_status();
-    let streams;
-    match &active_spec_status {
+    let streams = match &active_spec_status {
         Some(ActiveSpecStatus::Active(active_spec)) => {
             options
                 .mp
                 .note(format!("active spec: {}", active_spec.spec.name()));
 
-            streams = hashset! { active_spec.stream_key };
+            hashset! { active_spec.stream_key }
         }
         Some(ActiveSpecStatus::StreamsBroken(broken)) => {
             options
                 .mp
                 .note("one or more streams are broken; will update them all");
-            streams = broken.keys().copied().collect();
+            broken.keys().copied().collect()
         }
         None => {
             options
@@ -73,7 +72,7 @@ pub fn ui_op_update_stream(options: UiUpdateStreamOptions) -> YbResult<()> {
                 .note("no active spec; consider using the 'yb activate' command");
             return Ok(());
         }
-    }
+    };
 
     let update_opts = UpdateStreamOptions::new(options.config, streams);
 

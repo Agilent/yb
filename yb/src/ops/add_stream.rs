@@ -74,6 +74,7 @@ pub fn op_add_stream(options: AddStreamOptions) -> YbResult<()> {
     let f = OpenOptions::new()
         .write(true)
         .create(true)
+        .truncate(true)
         .open(&config_file_path)
         .context(format!(
             "failed to open file {:?} for writing",
