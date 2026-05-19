@@ -47,7 +47,7 @@ impl SubcommandRunner for RunCommand {
             println!(
                 "\n{} [{}]:",
                 header,
-                make_relative_to_cwd(dname_path).unwrap().display()
+                make_relative_to_cwd(dname_path)?.display()
             );
 
             let result = Command::new(&self.args[0])

@@ -33,7 +33,6 @@ impl SubcommandRunner for SelfUpdateCommand {
 
             Ok(())
         })
-        .await
-        .unwrap()
+        .await?
     }
 }

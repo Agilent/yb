@@ -47,10 +47,10 @@ impl SubcommandRunner for InitCommand {
         let new_yocto_dir;
         match context {
             Some(ToolContext::Yb(yb_env)) => {
-                return Err(eyre::eyre!(
+                eyre::bail!(
                     "a .yb environment already exists at {:?}",
                     yb_env.root_dir()
-                ));
+                );
             }
             Some(ToolContext::YoctoEnv(context2)) => {
                 return Err(eyre::eyre!(
