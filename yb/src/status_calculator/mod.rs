@@ -96,24 +96,23 @@ fn detect_layers<P: AsRef<Path>>(start_dir: P) -> YbResult<HashSet<Layer>> {
     // TODO depth?
 
     let start_dir = start_dir.as_ref();
-    let layers;
-    if looks_like_layer_dir(start_dir) {
+    let layers = if looks_like_layer_dir(start_dir) {
         // The `start_dir` is itself a single layer
-        layers = hashset![Layer {
+        hashset![Layer {
             path: start_dir.to_path_buf(),
             name: start_dir.file_name().unwrap().to_str().unwrap().to_string(),
-        }];
+        }]
     } else {
         // Detect layers under the path
-        layers = fs::read_dir(start_dir)?
+        fs::read_dir(start_dir)?
             .filter_map(|r| r.ok().map(|r| r.path()))
             .filter(|r| looks_like_layer_dir(r))
             .map(|path| Layer {
                 path: path.clone(),
                 name: path.file_name().unwrap().to_str().unwrap().to_string(),
             })
-            .collect();
-    }
+            .collect()
+    };
 
     Ok(layers)
 }
@@ -293,7 +292,7 @@ where
         c(StatusCalculatorEvent::MissingReposDetected(&missing_repos));
     }
 
-    let bblayers = read_bblayers(&context.build_dir())?;
+    let bblayers = read_bblayers(context.build_dir())?;
     let ret = ComputedStatus {
         source_dirs: status_entries,
         enabled_layers: bblayers,
