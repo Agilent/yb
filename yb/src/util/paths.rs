@@ -16,9 +16,9 @@ pub fn run_which(program_name: &str) -> YbResult<Option<PathBuf>> {
     })
 }
 
-pub fn make_relative_to_cwd<P: ?Sized>(path: &P) -> YbResult<PathBuf>
+pub fn make_relative_to_cwd<P>(path: &P) -> YbResult<PathBuf>
 where
-    P: AsRef<Path>,
+    P: AsRef<Path> + ?Sized,
 {
     try_diff_paths(path, env::current_dir()?)
 }

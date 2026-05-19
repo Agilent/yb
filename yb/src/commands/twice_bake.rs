@@ -17,8 +17,6 @@ use std::pin::Pin;
 use std::process::Stdio;
 use std::time::SystemTime;
 use std::{cmp, io};
-use time::OffsetDateTime;
-use time::macros::format_description;
 use tokio::io::AsyncBufReadExt;
 use tokio::process::Command;
 use tokio_stream::wrappers::LinesStream;
@@ -55,6 +53,7 @@ enum TaskOutcome {
     Success,
 }
 
+#[allow(unused)]
 #[serde_as]
 #[derive(Deserialize, MultiIndexMap, Debug)]
 #[multi_index_derive(Debug)]
@@ -202,14 +201,14 @@ impl SubcommandRunner for TwiceBakeCommand {
                 .nth(self.previous as usize - 1)
                 .unwrap();
 
-            fn systemtime_strftime<T>(dt: T) -> String
-            where
-                T: Into<OffsetDateTime>,
-            {
-                dt.into()
-                    .format(format_description!("[weekday repr:short], [day] [month repr:short] [year] [hour]:[minute]:[second] [offset_hour][offset_minute]"))
-                    .unwrap()
-            }
+            // fn systemtime_strftime<T>(dt: T) -> String
+            // where
+            //     T: Into<OffsetDateTime>,
+            // {
+            //     dt.into()
+            //         .format(format_description!("[weekday repr:short], [day] [month repr:short] [year] [hour]:[minute]:[second] [offset_hour][offset_minute]"))
+            //         .unwrap()
+            // }
 
             mp.note(format!(
                 "selected history dir = {:?}",

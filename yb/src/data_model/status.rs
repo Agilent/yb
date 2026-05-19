@@ -320,8 +320,7 @@ pub fn enumerate_revisions<P: AsRef<Path>>(repo_path: P) -> YbResult<HashSet<Str
         .output()?
         .stdout;
 
-    Ok(std::str::from_utf8(revs.as_slice())
-        .unwrap()
+    Ok(std::str::from_utf8(revs.as_slice())?
         .lines()
         .map(String::from)
         .collect())

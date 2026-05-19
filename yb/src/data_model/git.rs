@@ -18,7 +18,7 @@ impl UpstreamComparison {
 // It just so happens we can use the ordering of the `UpstreamComparison` enum to determine the
 // optimal branch.
 pub fn determine_optimal_checkout_branch(
-    candidates: &Vec<LocalTrackingBranchWithUpstreamComparison>,
+    candidates: &[LocalTrackingBranchWithUpstreamComparison],
 ) -> Option<&LocalTrackingBranchWithUpstreamComparison> {
     candidates
         .iter()
