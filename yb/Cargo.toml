@@ -19,14 +19,14 @@ coredump = "0.1.2"
 dialoguer = "0.11.0"
 enum_dispatch = "0.3.13"
 eyre = "0.6.12"
-git2 = "0.21.0"
+git2 = { version = "0.21.0", features = ["vendored-libgit2", "vendored-openssl", "ssh", "https"] }
 glob = "0.3.1"
 indoc = "2.0.5"
 indicatif = { version = "0.17.8", features = ["improved_unicode"] }
 itertools = "0.13.0"
 maplit = "1"
 multi_index_map = "0.11.0"
-openssl-sys = { version = "0.9.103", features = ["vendored"] }
+#openssl-sys = { version = "0.9.103", features = ["vendored"] }
 pathdiff = "0.2.1"
 self_update = { version = "0.44.0", features = ["archive-tar", "compression-flate2"] }
 serde = { version = "1", features = ["derive"] }
@@ -46,5 +46,5 @@ serde_with = { version = "3.9.0", features = ["macros"] }
 [dev-dependencies]
 assert_cmd = "2"
 
-[package.metadata.cargo-machete]
-ignored = ["openssl-sys"]
+#[package.metadata.cargo-machete]
+#ignored = ["openssl-sys"]
