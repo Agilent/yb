@@ -2,7 +2,6 @@ use std::fmt::Debug;
 
 use async_trait::async_trait;
 
-use console::Style;
 use git2::Repository;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 
@@ -121,17 +120,6 @@ impl SubcommandRunner for SyncCommand {
 
                 match &status_data.corresponding_spec_repo {
                     Some(corresponding_spec_repo_status) => match &corresponding_spec_repo_status {
-                        CorrespondingSpecRepoStatus::RelatedRepo { spec_repo, .. } => {
-                            println!(
-                                "{}",
-                                Style::new().red().on_white().apply_to(format!(
-                                    "{} shares commits with spec repo {}",
-                                    status_data.path.display(),
-                                    spec_repo.url
-                                ))
-                            );
-                            panic!();
-                        }
                         CorrespondingSpecRepoStatus::RemoteMatch(remote_match) => {
                             if status_data.is_local_branch_tracking_correct_branch() {
                                 let upstream_comparison = status_data

@@ -255,22 +255,6 @@ impl SubcommandRunner for StatusCommand {
                                     branch_status_color = Some(Style::from_dotted_str("red.bold"));
                                 }
                             }
-                            CorrespondingSpecRepoStatus::RelatedRepo { spec_repo, .. } => {
-                                corresponding_spec_repo_message.set_message(
-                                        Style::new().red().on_white().apply_to("\tthis repo shares commits with a spec repo, but the remote is wrong").to_string(),
-                                    );
-
-                                subdir_lines.push(mp.println_after(
-                                    &corresponding_spec_repo_message,
-                                    format!("\t\trepo: {}", spec_repo.url),
-                                ));
-                                subdir_lines.push(mp.println_after(
-                                    subdir_lines.last().unwrap(),
-                                    format!("\t\trefspec: {}", spec_repo.refspec),
-                                ));
-
-                                branch_status_color = Some(Style::from_dotted_str("red.bold"));
-                            }
                         }
                     }
 

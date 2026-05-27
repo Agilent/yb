@@ -259,11 +259,7 @@ impl RemoteMatchStatus {
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub enum CorrespondingSpecRepoStatus {
-    RemoteMatch(RemoteMatchStatus),
-    RelatedRepo {
-        spec_repo: SpecRepo,
-        spec_repo_name: String,
-    },
+    RemoteMatch(RemoteMatchStatus)
 }
 
 impl CorrespondingSpecRepoStatus {
@@ -272,9 +268,6 @@ impl CorrespondingSpecRepoStatus {
             CorrespondingSpecRepoStatus::RemoteMatch(RemoteMatchStatus {
                 spec_repo_name, ..
             }) => spec_repo_name.clone(),
-            CorrespondingSpecRepoStatus::RelatedRepo { spec_repo_name, .. } => {
-                spec_repo_name.clone()
-            }
         }
     }
 
@@ -283,7 +276,6 @@ impl CorrespondingSpecRepoStatus {
             CorrespondingSpecRepoStatus::RemoteMatch(remote_match_status) => {
                 &remote_match_status.spec_repo
             }
-            CorrespondingSpecRepoStatus::RelatedRepo { spec_repo, .. } => spec_repo,
         }
     }
 }
@@ -426,28 +418,6 @@ where
                     },
                 )));
             }
-        }
-    }
-
-    // Make another pass through spec repos to look for related repos
-    for (spec_repo_subdir_name, spec_repo) in spec_repos {
-        if repo_subdir_name == spec_repo_subdir_name {
-            let op = format!("checking possible upstream {}", spec_repo.url);
-            c(StatusCalculatorEvent::StartSubdirOperation { operation_name: op });
-            let spec_repo_revs = clone_and_enumerate_revisions(spec_repo)?;
-            let on_disk_revs = enumerate_revisions(repo.path())?;
-            c(StatusCalculatorEvent::StartSubdirOperation {
-                operation_name: "".into(),
-            });
-
-            if spec_repo_revs.is_disjoint(&on_disk_revs) {
-                continue;
-            }
-
-            return Ok(Some(CorrespondingSpecRepoStatus::RelatedRepo {
-                spec_repo: spec_repo.clone(),
-                spec_repo_name: spec_repo_subdir_name.clone(),
-            }));
         }
     }
 
