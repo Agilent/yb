@@ -11,9 +11,7 @@ use tempfile::Builder;
 use crate::config::Config;
 use crate::core::tool_context::require_yb_env;
 use crate::errors::YbResult;
-use crate::stream::{
-    STREAM_CONFIG_FILE, STREAM_CONTENT_ROOT_SUBDIR, Stream, StreamConfig, StreamKind,
-};
+use crate::stream::{STREAM_CONFIG_FILE, STREAM_CONTENT_ROOT_SUBDIR, Stream, StreamConfig};
 use crate::stream_db::StreamKey;
 use crate::util::git::ssh_agent_remote_callbacks;
 
@@ -68,8 +66,7 @@ pub fn op_add_stream(options: AddStreamOptions) -> YbResult<()> {
         .clone(&options.uri, tmp_contents_dir.as_ref())?;
 
     // Write the config file
-    // TODO: when other stream types are added, don't hardcode git
-    let config = StreamConfig::new(StreamKind::Git);
+    let config = StreamConfig::default();
     let config_file_path = tmpdir.path().join(STREAM_CONFIG_FILE);
     let f = OpenOptions::new()
         .write(true)

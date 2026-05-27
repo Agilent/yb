@@ -25,20 +25,13 @@ pub const STREAM_CONTENT_ROOT_SUBDIR: &str = "contents";
 pub const STREAM_CONFIG_FILE: &str = "stream.yaml";
 
 #[derive(Debug, Deserialize, Serialize, Eq, PartialEq)]
-pub enum StreamKind {
-    Git,
-}
-
-#[derive(Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub struct StreamConfig {
-    kind: StreamKind,
     format_version: u32,
 }
 
-impl StreamConfig {
-    pub fn new(kind: StreamKind) -> Self {
+impl Default for StreamConfig {
+    fn default() -> Self {
         StreamConfig {
-            kind,
             format_version: STREAM_CONFIG_FILE_VERSION,
         }
     }
