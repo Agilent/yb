@@ -6,7 +6,6 @@ use crate::errors::YbResult;
 use crate::stream_db::StreamKey;
 use crate::yb_env::ActiveSpecStatus;
 
-#[derive(Default)]
 pub struct UpdateStreamResult {
     pub active_spec_updated: bool,
 }
@@ -35,8 +34,6 @@ pub fn op_update_stream<F>(options: UpdateStreamOptions, mut c: F) -> YbResult<U
 where
     F: FnMut(UpdateStreamEvent),
 {
-    let mut result = UpdateStreamResult::default();
-
     let mut yb_env = require_yb_env(options.config)?;
 
     let active_spec_stream = yb_env.active_spec_status().and_then(|status| match status {
@@ -46,6 +43,7 @@ where
 
     c(UpdateStreamEvent::Start);
 
+    let mut was_updated = false;
     for stream_key in options.stream_keys {
         let is_active_stream = active_spec_stream
             .map(|key| key == stream_key)
@@ -64,7 +62,7 @@ where
                 let reloaded_spec = stream.get_spec_by_name(active_spec.spec.name()).unwrap();
                 if *reloaded_spec != active_spec.spec {
                     c(UpdateStreamEvent::ActiveSpecUpdated);
-                    result.active_spec_updated = true;
+                    was_updated = true;
                     yb_env.activate_spec(reloaded_spec.clone())?;
                 }
             } else {
@@ -73,7 +71,11 @@ where
         }
     }
 
-    c(UpdateStreamEvent::Finish(&result));
+    let ret = UpdateStreamResult {
+        active_spec_updated: was_updated,
+    };
 
-    Ok(result)
+    c(UpdateStreamEvent::Finish(&ret));
+
+    Ok(ret)
 }
