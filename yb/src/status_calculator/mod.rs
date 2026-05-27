@@ -141,6 +141,7 @@ where
             remote
                 .fetch(&[] as &[&str], Some(&mut fetch_options), None)
                 .with_suggestion(|| {
+                    // TODO: better diagnostic
                     indoc! {r#"
             Is ssh-agent configured and running? If not, you might need to run:
                 eval `ssh-agent -s`
@@ -263,12 +264,9 @@ where
         if let Some(repo) = repo_maybe {
             let status =
                 compute_repo_status(repo, subdir, &mut options, &active_spec_repos, &mut c)?;
-            if let ComputedStatusEntry::OnDiskRepo(OnDiskRepoStatus {
-                corresponding_spec_repo: Some(c),
-                ..
-            }) = &status
-            {
-                active_spec_repos.remove(&c.spec_repo_name());
+
+            if let Some(spec_repo) = status.spec_repo() {
+                active_spec_repos.remove(&spec_repo.name);
             }
 
             c(StatusCalculatorEvent::SubdirStatusComputed(&status));

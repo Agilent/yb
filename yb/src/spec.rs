@@ -1,14 +1,15 @@
 use crate::data_model::Layer;
+use crate::errors::YbResult;
+use crate::stream_db::StreamKey;
 use color_eyre::Help;
 use eyre::Report;
 use itertools::Itertools;
+use serde::de::{MapAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::{HashMap, HashSet};
+use std::fmt;
 use std::fs::File;
 use std::path::{Path, PathBuf};
-
-use crate::errors::YbResult;
-use crate::stream_db::StreamKey;
 
 const SPEC_FORMAT_VERSION: u32 = 1;
 
@@ -19,6 +20,8 @@ const fn default_format_version() -> u32 {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Spec {
     header: SpecHeader,
+
+    #[serde(deserialize_with = "deserialize_and_inject_key")]
     pub(crate) repos: HashMap<String, SpecRepo>,
 
     #[serde(skip)]
@@ -32,6 +35,40 @@ impl PartialEq for Spec {
 }
 
 impl Eq for Spec {}
+
+pub fn deserialize_and_inject_key<'de, D>(
+    deserializer: D,
+) -> Result<HashMap<String, SpecRepo>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct MapVisitor;
+
+    impl<'de> Visitor<'de> for MapVisitor {
+        type Value = HashMap<String, SpecRepo>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a map of records")
+        }
+
+        fn visit_map<M>(self, mut map: M) -> Result<Self::Value, M::Error>
+        where
+            M: MapAccess<'de>,
+        {
+            let mut values = HashMap::new();
+
+            while let Some((key, mut record)) = map.next_entry::<String, SpecRepo>()? {
+                // Inject key as name
+                record.name = key.clone();
+                values.insert(key, record);
+            }
+
+            Ok(values)
+        }
+    }
+
+    deserializer.deserialize_map(MapVisitor)
+}
 
 impl Spec {
     pub fn load(path: &Path, stream_key: StreamKey) -> YbResult<Self> {
@@ -89,6 +126,8 @@ where
 
 #[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct SpecRepo {
+    #[serde(skip_deserializing)]
+    pub(crate) name: String,
     pub(crate) url: String,
     pub(crate) refspec: String,
     #[serde(

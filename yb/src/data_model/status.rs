@@ -264,14 +264,6 @@ pub enum CorrespondingSpecRepoStatus {
 }
 
 impl CorrespondingSpecRepoStatus {
-    pub fn spec_repo_name(&self) -> String {
-        match &self {
-            CorrespondingSpecRepoStatus::RemoteMatch(RemoteMatchStatus {
-                spec_repo_name, ..
-            }) => spec_repo_name.clone(),
-        }
-    }
-
     pub fn spec_repo(&self) -> &SpecRepo {
         match &self {
             CorrespondingSpecRepoStatus::RemoteMatch(remote_match_status) => {
@@ -338,8 +330,6 @@ pub fn clone_and_enumerate_revisions(spec_repo: &SpecRepo) -> YbResult<HashSet<S
 
 /// For the on-disk repository `repo`, try to find corresponding spec repo using these methods:
 ///     1. Check if the repos share a remote (either primary or extra)
-///     2. See if the on-disk repo and the spec repo remote has any common commits (by cloning the
-///         latter to a temporary directory)
 /// TODO document does not validate refspec
 pub fn find_corresponding_spec_repo_for_repo<F>(
     repo: &Repository,
