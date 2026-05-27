@@ -1,7 +1,7 @@
 use crate::error::ServiceResult;
 use crate::service::ServiceClient;
 use std::path::PathBuf;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, Instant};
 use tarpc::client::RpcError;
 use tarpc::context::Context;
 use tarpc::{client, context, tokio_serde::formats::Json};
@@ -50,7 +50,7 @@ impl Client {
 
     fn make_context() -> Context {
         let mut context = context::current();
-        context.deadline = SystemTime::now() + Duration::from_secs(60 * 5);
+        context.deadline = Instant::now() + Duration::from_secs(60 * 5);
         context
     }
 }
