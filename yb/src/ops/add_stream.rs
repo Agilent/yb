@@ -97,7 +97,7 @@ pub fn op_add_stream(options: AddStreamOptions) -> YbResult<()> {
 
     // Everything was OK, so move into stream directory
     let mut mv_cmd = Command::new("mv");
-    mv_cmd.arg(tmpdir.into_path()).arg(&stream_root_dir);
+    mv_cmd.arg(tmpdir.keep()).arg(&stream_root_dir);
     mv_cmd.assert().success();
 
     println!("yb {:?}", yb_env);

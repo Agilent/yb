@@ -35,7 +35,7 @@ impl DebugTempDir {
         self.0.as_ref().unwrap().path()
     }
     pub fn into_path(mut self) -> PathBuf {
-        self.0.take().unwrap().into_path()
+        self.0.take().unwrap().keep()
     }
     pub fn close(mut self) -> Result<()> {
         self.0.take().unwrap().close()
