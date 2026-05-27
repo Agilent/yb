@@ -156,29 +156,30 @@ where
     // See if we can map the repo to a spec repo
     let spec_repo_status = find_corresponding_spec_repo_for_repo(&repo, active_spec_repos, c)?;
 
-    let current_branch_status = {
-        // TODO: gracefully handle detached HEAD and repos without a tracked branch
-        let local_branch = get_current_local_branch(&repo)?;
-        let local_branch_name = local_branch.name()?.unwrap().to_string();
+    let current_branch_status = get_current_local_branch(&repo)?
+        .map(|b| -> YbResult<_> {
+            let local_branch_name = b.name()?.unwrap().to_string();
 
-        BranchStatus {
-            local_branch_name,
-            upstream_branch_status: compare_branch_to_upstream(&repo, &local_branch)?,
-        }
-    };
+            Ok(BranchStatus {
+                local_branch_name,
+                upstream_branch_status: compare_branch_to_upstream(&repo, &b)?,
+            })
+        })
+        .transpose()?;
 
     // Only run log if enabled and the repo is not diverged
-    let commits = if options.log && !current_branch_status.is_diverged() {
-        let mut walker = repo.revwalk()?;
-        walker.set_sorting(git2::Sort::TOPOLOGICAL)?;
-        walker.push_head()?;
-        let mut commit_v = vec![];
-        for commit in walker.take(5) {
-            commit_v.push(commit?);
+    let commits = match (options.log, &current_branch_status) {
+        (true, Some(status)) if !status.is_diverged() => {
+            let mut walker = repo.revwalk()?;
+            walker.set_sorting(git2::Sort::TOPOLOGICAL)?;
+            walker.push_head()?;
+            let mut commit_v = vec![];
+            for commit in walker.take(5) {
+                commit_v.push(commit?);
+            }
+            Some(commit_v)
         }
-        Some(commit_v)
-    } else {
-        None
+        (_, _) => None,
     };
 
     let is_workdir_dirty = !repo.statuses(Some(&mut StatusOptions::new()))?.is_empty();

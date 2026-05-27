@@ -177,13 +177,14 @@ impl SubcommandRunner for StatusCommand {
                 StatusCalculatorEvent::SubdirStatusComputed(ComputedStatusEntry::OnDiskRepo(
                     repo_status,
                 )) => {
-                    let on_branch_message = mp.println_after(
-                        subdir_spinner.as_ref().unwrap(),
-                        format!(
-                            "\ton branch '{}'",
-                            repo_status.current_branch_status.local_branch_name
+                    let on_branch_message = match &repo_status.current_branch_status {
+                        Some(s) => mp.println_after(
+                            subdir_spinner.as_ref().unwrap(),
+                            format!("\ton branch '{}'", s.local_branch_name),
                         ),
-                    );
+                        None => mp.println_after(subdir_spinner.as_ref().unwrap(), "\tno branch"),
+                    };
+
                     subdir_lines.push(on_branch_message.clone());
 
                     let branch_message = mp.println_after(&on_branch_message, "");
@@ -191,8 +192,10 @@ impl SubcommandRunner for StatusCommand {
                     let mut branch_status_color = None;
 
                     // Report difference to upstream branch (if on branch and tracking an upstream)
-                    if let Some(current_branch_status_message) =
-                        format_upstream_status_message(&repo_status.current_branch_status)
+                    if let Some(current_branch_status_message) = repo_status
+                        .current_branch_status
+                        .as_ref()
+                        .and_then(format_upstream_status_message)
                     {
                         branch_message
                             .set_message(format!("\t{}", current_branch_status_message.message));

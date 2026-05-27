@@ -57,7 +57,7 @@ impl SubcommandRunner for SyncCommand {
 
         if let Some(spec_name) = &self.spec {
             // TODO: don't immediately activate. Use current spec and desired spec to better calculate
-            // what needs to be done.
+            //  what needs to be done.
             activate_spec(&mut yb_env, spec_name)?;
         }
 
@@ -124,6 +124,10 @@ impl SubcommandRunner for SyncCommand {
                             if status_data.is_local_branch_tracking_correct_branch() {
                                 let upstream_comparison = status_data
                                     .current_branch_status
+                                    .as_ref()
+                                    // TODO: unwrap is ok because `is_local_branch_tracking_correct_branch` returned true,
+                                    //  but maybe cleaner way to do this?
+                                    .unwrap()
                                     .upstream_branch_status
                                     .as_ref()
                                     .unwrap()

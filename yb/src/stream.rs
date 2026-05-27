@@ -134,7 +134,7 @@ impl Stream {
         self.fetch()?;
 
         let repo = self.repo.lock().unwrap();
-        let current_branch_name = get_current_local_branch_name(&repo)?;
+        let current_branch_name = get_current_local_branch_name(&repo)?.unwrap();
 
         let fetch_head = repo.find_reference("FETCH_HEAD")?;
         let fetch_commit = repo.reference_to_annotated_commit(&fetch_head)?;

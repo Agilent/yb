@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::data_model::git::RemoteTrackingBranch;
-use eyre::eyre;
+use eyre::{Context, eyre};
 use git2::ErrorCode::NotFound;
 use git2::{
     Branch, BranchType, Cred, ErrorCode, ObjectType, Remote, RemoteCallbacks, Repository, Revwalk,
@@ -14,27 +14,37 @@ use git2::{
 
 use crate::errors::YbResult;
 
-pub fn get_current_local_branch(repo: &Repository) -> YbResult<Branch<'_>> {
+pub fn get_current_local_branch(repo: &Repository) -> YbResult<Option<Branch<'_>>> {
     match repo.head() {
-        Ok(head) => Ok(Branch::wrap(head)),
+        Ok(head) => Ok(Some(Branch::wrap(head))),
         Err(ref e) if e.code() == ErrorCode::UnbornBranch /*|| e.code() == ErrorCode::NotFound*/ => {
-            Err(eyre!("unborn branch"))
+            Ok(None)
         }
         Err(e) => Err(e.into()),
     }
 }
 
-pub fn get_current_local_branch_name(repo: &Repository) -> YbResult<String> {
-    Ok(get_current_local_branch(repo)?
-        .name()?
-        .ok_or_else(|| eyre!("couldn't determine shorthand"))?
-        .to_string())
+pub fn get_current_local_branch_name(repo: &Repository) -> YbResult<Option<String>> {
+    let Some(branch) = get_current_local_branch(repo)? else {
+        return Ok(None);
+    };
+
+    Ok(Some(
+        branch
+            .name()?
+            .ok_or_else(|| eyre!("couldn't determine shorthand"))?
+            .to_string(),
+    ))
 }
 
 pub fn get_remote_tracking_branch_for_current_local_branch(
     repo: &Repository,
 ) -> YbResult<Option<RemoteTrackingBranch>> {
-    get_remote_tracking_branch(&get_current_local_branch(repo)?)
+    let Some(local_branch) = get_current_local_branch(repo)? else {
+        return Ok(None);
+    };
+
+    get_remote_tracking_branch(&local_branch)
 }
 
 pub fn get_remote_tracking_branch(branch: &Branch) -> YbResult<Option<RemoteTrackingBranch>> {
@@ -53,7 +63,10 @@ pub fn get_remote_tracking_branch(branch: &Branch) -> YbResult<Option<RemoteTrac
 }
 
 pub fn get_remote_name_for_current_branch(repo: &Repository) -> YbResult<Option<String>> {
-    let branch = get_current_local_branch(repo)?;
+    let Some(branch) = get_current_local_branch(repo)? else {
+        return Ok(None);
+    };
+
     // Repository::branch_upstream_remote needs the 'refs/heads/blah'
     let branch_ref_name = branch
         .into_reference()

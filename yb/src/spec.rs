@@ -97,6 +97,14 @@ pub struct SpecRepo {
         deserialize_with = "deserialize_null_default"
     )]
     pub(crate) extra_remotes: HashMap<String, SpecRemote>,
+
+    #[serde(
+        rename = "obsolete-remotes",
+        default,
+        deserialize_with = "deserialize_null_default"
+    )]
+    pub(crate) obsolete_remotes: HashMap<String, SpecRemote>,
+
     // each entry is a layer name
     pub(crate) layers: Option<HashMap<String, ()>>,
 }

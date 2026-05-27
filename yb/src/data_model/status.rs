@@ -150,7 +150,7 @@ pub struct OnDiskRepoStatus {
     #[serde(skip)]
     pub recent_commits: Option<Vec<Oid>>,
     /// Not necessarily the correct branch as far as any active spec is concerned
-    pub current_branch_status: BranchStatus,
+    pub current_branch_status: Option<BranchStatus>,
     /// Status information pertaining to corresponding spec repo, or None if no matching spec repo
     pub corresponding_spec_repo: Option<CorrespondingSpecRepoStatus>,
     /// Layers that were detected inside the repo (via looking for conf/layer.conf)
@@ -167,17 +167,17 @@ impl OnDiskRepoStatus {
     }
 
     pub fn is_local_branch_tracking_correct_branch(&self) -> bool {
+        // TODO: enhance types to make this unnecessary?
         assert!(
             self.has_corresponding_spec_repo(),
             "need to check for spec repo before using this method!"
         );
         let spec_repo = self.corresponding_spec_repo.as_ref().unwrap();
-        match spec_repo {
-            CorrespondingSpecRepoStatus::RemoteMatch(remote_match) => remote_match
-                .is_local_branch_tracking_correct_branch(
-                    &self.current_branch_status.local_branch_name,
-                ),
-            _ => panic!("need to check for spec repo match type before using this method!"),
+        match (spec_repo, &self.current_branch_status) {
+            (CorrespondingSpecRepoStatus::RemoteMatch(remote_match), Some(branch)) => {
+                remote_match.is_local_branch_tracking_correct_branch(&branch.local_branch_name)
+            }
+            (CorrespondingSpecRepoStatus::RemoteMatch(_), None) => false,
         }
     }
 }
@@ -258,8 +258,9 @@ impl RemoteMatchStatus {
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
+#[non_exhaustive]
 pub enum CorrespondingSpecRepoStatus {
-    RemoteMatch(RemoteMatchStatus)
+    RemoteMatch(RemoteMatchStatus),
 }
 
 impl CorrespondingSpecRepoStatus {
