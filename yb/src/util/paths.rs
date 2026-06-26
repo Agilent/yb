@@ -58,7 +58,7 @@ pub fn is_hidden(entry: &DirEntry) -> bool {
 }
 
 // from https://stackoverflow.com/a/68233480
-/// Improve the path to try remove and solve .. token.
+/// Improve the path to try to remove and resolve .. tokens.
 ///
 /// This assumes that `a/b/../c` is `a/c` which might be different from
 /// what the OS would have chosen when b is a link. This is OK
