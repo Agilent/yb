@@ -124,10 +124,12 @@ pub fn require_tool_context(config: &Config) -> YbResult<ToolContext> {
 
 pub fn require_yb_env(config: &Config) -> YbResult<YbEnv> {
     determine_tool_context(config).and_then(|c| match c {
-        None => eyre::bail!("expected a yb environment; no environment was found"),
+        None => {
+            eyre::bail!("expected a yb environment; no environment was found");
+        }
         Some(ToolContext::Yb(yb_env)) => Ok(yb_env),
         Some(ToolContext::YoctoEnv(_)) => {
-            eyre::bail!("expected a yb environment; a Yocto environment was found")
+            eyre::bail!("expected a yb environment; a Yocto environment was found");
         }
     })
 }

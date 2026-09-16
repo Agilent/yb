@@ -148,7 +148,7 @@ impl StreamDb {
                 stream_key: key,
             })
         } else {
-            eyre::bail!("spec '{}' not found in any stream", spec.name())
+            eyre::bail!("spec '{}' not found in any stream", spec.name());
         }
     }
 }

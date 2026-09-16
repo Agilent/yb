@@ -215,10 +215,10 @@ where
             vec![]
         }
         Err(Ok(io_error)) => {
-            eyre::bail!("IO error while enumerating sources directory {}", io_error)
+            eyre::bail!("IO error while enumerating sources directory {}", io_error);
         }
         Err(Err(non_io_error)) => {
-            eyre::bail!("error enumerating sources directory {}", non_io_error)
+            eyre::bail!("error enumerating sources directory {}", non_io_error);
         }
     };
 

@@ -44,7 +44,7 @@ pub fn ui_op_update_stream(options: UiUpdateStreamOptions) -> YbResult<()> {
         Some(yb_env) => yb_env,
         None => {
             if options.fail_if_no_yb_env {
-                eyre::bail!("expected yb environment; see the 'yb init' command")
+                eyre::bail!("expected yb environment; see the 'yb init' command");
             } else {
                 return Ok(());
             }
