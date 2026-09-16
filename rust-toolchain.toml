@@ -1,2 +1,3 @@
 [toolchain]
-channel = "nightly"
+# TODO: need to fix some type inference in bytebraise
+channel = "nightly-2026-08-01"
