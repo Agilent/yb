@@ -199,9 +199,11 @@ mod tests {
         let pool = PoolHelper::connect_or_local().await.unwrap();
 
         let spec_repo = SpecRepo {
+            name: "meta-raspberrypi".to_string(),
             url: "https://github.com/agherzan/meta-raspberrypi.git".to_string(),
             refspec: "honister".to_string(),
             extra_remotes: Default::default(),
+            obsolete_remotes: Default::default(),
             layers: None,
         };
 
