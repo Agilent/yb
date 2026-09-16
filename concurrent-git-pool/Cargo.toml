@@ -1,5 +1,5 @@
 [package]
-name = "concurrent_git_pool"
+name = "concurrent-git-pool"
 version = "0.1.0"
 edition = "2024"
 
@@ -17,5 +17,5 @@ tokio = { version = "1", features = ["full"] }
 tarpc = { version = "0.37.0", features = ["full"] }
 
 [[bin]]
-name = "concurrent_git_pool"
+name = "concurrent-git-pool"
 path = "src/bin/server.rs"

@@ -2,8 +2,8 @@
 resolver = "3"
 
 members = [
-    "concurrent_git_pool",
-    "concurrent_git_pool_proc_macros",
+    "concurrent-git-pool",
+    "concurrent-git-pool-proc-macros",
     "yb",
-    "yb_tests",
+    "yb-tests",
 ]

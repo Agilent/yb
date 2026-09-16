@@ -1,5 +1,5 @@
 [package]
-name = "concurrent_git_pool_proc_macros"
+name = "concurrent-git-pool-proc-macros"
 version = "0.1.0"
 edition = "2024"
 
@@ -15,4 +15,4 @@ proc-macro2 = "1"
 tokio = "1"
 
 [dev-dependencies]
-concurrent_git_pool = { path = "../concurrent_git_pool" }
+concurrent-git-pool = { path = "../concurrent-git-pool" }

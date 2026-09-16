@@ -426,7 +426,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "concurrent_git_pool"
+name = "concurrent-git-pool"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -441,10 +441,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "concurrent_git_pool_proc_macros"
+name = "concurrent-git-pool-proc-macros"
 version = "0.1.0"
 dependencies = [
- "concurrent_git_pool",
+ "concurrent-git-pool",
  "proc-macro2",
  "quote",
  "syn 2.0.117",
@@ -3996,7 +3996,7 @@ dependencies = [
  "bytebraise",
  "clap 3.2.25",
  "color-eyre",
- "concurrent_git_pool",
+ "concurrent-git-pool",
  "console 0.15.11",
  "coredump",
  "dialoguer",
@@ -4031,8 +4031,8 @@ version = "0.1.0"
 dependencies = [
  "assert_cmd",
  "color-eyre",
- "concurrent_git_pool",
- "concurrent_git_pool_proc_macros",
+ "concurrent-git-pool",
+ "concurrent-git-pool-proc-macros",
  "tokio",
  "yb",
 ]
