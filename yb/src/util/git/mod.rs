@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::data_model::git::RemoteTrackingBranch;
-use eyre::{Context, eyre};
+use eyre::eyre;
 use git2::ErrorCode::NotFound;
 use git2::{
     Branch, BranchType, Cred, ErrorCode, ObjectType, Remote, RemoteCallbacks, Repository, Revwalk,

@@ -334,7 +334,7 @@ pub fn clone_and_enumerate_revisions(spec_repo: &SpecRepo) -> YbResult<HashSet<S
 pub fn find_corresponding_spec_repo_for_repo<F>(
     repo: &Repository,
     spec_repos: &HashMap<String, SpecRepo>,
-    c: &mut F,
+    _c: &mut F,
 ) -> YbResult<Option<CorrespondingSpecRepoStatus>>
 where
     F: FnMut(StatusCalculatorEvent),
