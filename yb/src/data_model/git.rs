@@ -61,6 +61,26 @@ impl BranchStatus {
     }
 }
 
+/// What HEAD currently points at: a named local branch, or a detached commit
+/// (the latter is how a pinned-commit refspec is checked out).
+#[derive(Debug, Eq, PartialEq, Serialize)]
+pub enum CurrentCheckout {
+    Branch(BranchStatus),
+    /// Full hex commit hash that HEAD is detached at.
+    Detached {
+        commit: String,
+    },
+}
+
+impl CurrentCheckout {
+    pub fn as_branch_status(&self) -> Option<&BranchStatus> {
+        match self {
+            CurrentCheckout::Branch(status) => Some(status),
+            CurrentCheckout::Detached { .. } => None,
+        }
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Serialize)]
 pub struct UpstreamBranchStatus {
     pub remote_tracking_branch: RemoteTrackingBranch,

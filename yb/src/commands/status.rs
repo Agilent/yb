@@ -8,8 +8,10 @@ use indicatif::{MultiProgress, ProgressBar, ProgressFinish, ProgressStyle};
 
 use crate::Config;
 use crate::commands::SubcommandRunner;
-use crate::data_model::git::{BranchStatus, UpstreamComparison};
-use crate::data_model::status::{ComputedStatusEntry, CorrespondingSpecRepoStatus};
+use crate::data_model::git::{BranchStatus, CurrentCheckout, UpstreamComparison};
+use crate::data_model::status::{
+    ComputedStatusEntry, CorrespondingSpecRepoStatus, RemoteMatchTarget,
+};
 use crate::errors::YbResult;
 use crate::status_calculator::{StatusCalculatorEvent, StatusCalculatorOptions, compute_status};
 use crate::ui_ops::check_broken_streams::{
@@ -37,6 +39,11 @@ pub struct StatusCommand {
 struct UpstreamStatusMessage {
     pub message: String,
     pub style: Option<Style>,
+}
+
+/// Shortened form of a full commit hash, for compact display.
+fn short_sha(sha: &str) -> &str {
+    &sha[..sha.len().min(8)]
 }
 
 fn format_upstream_status_message(branch_status: &BranchStatus) -> Option<UpstreamStatusMessage> {
@@ -177,10 +184,14 @@ impl SubcommandRunner for StatusCommand {
                 StatusCalculatorEvent::SubdirStatusComputed(ComputedStatusEntry::OnDiskRepo(
                     repo_status,
                 )) => {
-                    let on_branch_message = match &repo_status.current_branch_status {
-                        Some(s) => mp.println_after(
+                    let on_branch_message = match &repo_status.current_checkout {
+                        Some(CurrentCheckout::Branch(s)) => mp.println_after(
                             subdir_spinner.as_ref().unwrap(),
                             format!("\ton branch '{}'", s.local_branch_name),
+                        ),
+                        Some(CurrentCheckout::Detached { commit }) => mp.println_after(
+                            subdir_spinner.as_ref().unwrap(),
+                            format!("\tdetached at '{}'", short_sha(commit)),
                         ),
                         None => mp.println_after(subdir_spinner.as_ref().unwrap(), "\tno branch"),
                     };
@@ -191,15 +202,20 @@ impl SubcommandRunner for StatusCommand {
                     subdir_lines.push(branch_message.clone());
                     let mut branch_status_color = None;
 
-                    // Report difference to upstream branch (if on branch and tracking an upstream)
-                    if let Some(current_branch_status_message) = repo_status
-                        .current_branch_status
-                        .as_ref()
-                        .and_then(format_upstream_status_message)
-                    {
-                        branch_message
-                            .set_message(format!("\t{}", current_branch_status_message.message));
-                        branch_status_color = current_branch_status_message.style;
+                    // Report difference to upstream branch (if on branch and tracking an
+                    // upstream), or confirm a pinned commit is checked out correctly.
+                    match &repo_status.current_checkout {
+                        Some(CurrentCheckout::Branch(branch_status)) => {
+                            if let Some(msg) = format_upstream_status_message(branch_status) {
+                                branch_message.set_message(format!("\t{}", msg.message));
+                                branch_status_color = msg.style;
+                            }
+                        }
+                        Some(CurrentCheckout::Detached { commit }) => {
+                            branch_message
+                                .set_message(format!("\tpinned at '{}'", short_sha(commit)));
+                        }
+                        None => {}
                     }
 
                     if let Some(corresponding_spec_repo_status) =
@@ -210,49 +226,62 @@ impl SubcommandRunner for StatusCommand {
 
                         match &corresponding_spec_repo_status {
                             CorrespondingSpecRepoStatus::RemoteMatch(remote_match_status) => {
-                                if !repo_status.is_local_branch_tracking_correct_branch() {
-                                    if !remote_match_status
-                                        .local_branches_tracking_remote
-                                        .is_empty()
-                                    {
-                                        corresponding_spec_repo_message.set_message(
-                                                Style::new().red().apply_to(format!(
-                                                    "\tshould be on a branch tracking '{}', such as:",
-                                                    remote_match_status.remote_tracking_branch.to_string()
-                                                )).to_string(),
-                                            );
+                                if !repo_status.is_synced_to_spec() {
+                                    match &remote_match_status.target {
+                                        RemoteMatchTarget::Branch(remote_tracking_branch) => {
+                                            if !remote_match_status
+                                                .local_branches_tracking_remote
+                                                .is_empty()
+                                            {
+                                                corresponding_spec_repo_message.set_message(
+                                                        Style::new().red().apply_to(format!(
+                                                            "\tshould be on a branch tracking '{}', such as:",
+                                                            remote_tracking_branch.to_string()
+                                                        )).to_string(),
+                                                    );
 
-                                        for branch in
-                                            &remote_match_status.local_branches_tracking_remote
-                                        {
-                                            let last_message = subdir_lines.last().unwrap();
-                                            subdir_lines.push(
-                                                mp.println_after(
-                                                    last_message,
+                                                for branch in &remote_match_status
+                                                    .local_branches_tracking_remote
+                                                {
+                                                    let last_message = subdir_lines.last().unwrap();
+                                                    subdir_lines.push(
+                                                        mp.println_after(
+                                                            last_message,
+                                                            Style::new()
+                                                                .red()
+                                                                .apply_to(format!(
+                                                                    "\t\t{}",
+                                                                    branch
+                                                                        .local_tracking_branch
+                                                                        .branch_name
+                                                                ))
+                                                                .to_string(),
+                                                        ),
+                                                    );
+                                                }
+                                            } else {
+                                                corresponding_spec_repo_message.set_message(
                                                     Style::new()
                                                         .red()
                                                         .apply_to(format!(
-                                                            "\t\t{}",
-                                                            branch
-                                                                .local_tracking_branch
-                                                                .branch_name
+                                                            "\tshould be on a branch tracking '{}'",
+                                                            remote_tracking_branch.to_string()
                                                         ))
                                                         .to_string(),
-                                                ),
+                                                );
+                                            }
+                                        }
+                                        RemoteMatchTarget::Commit(target_sha) => {
+                                            corresponding_spec_repo_message.set_message(
+                                                Style::new()
+                                                    .red()
+                                                    .apply_to(format!(
+                                                        "\tshould be checked out at pinned commit '{}'",
+                                                        short_sha(target_sha)
+                                                    ))
+                                                    .to_string(),
                                             );
                                         }
-                                    } else {
-                                        corresponding_spec_repo_message.set_message(
-                                            Style::new()
-                                                .red()
-                                                .apply_to(format!(
-                                                    "\tshould be on a branch tracking '{}'",
-                                                    remote_match_status
-                                                        .remote_tracking_branch
-                                                        .to_string()
-                                                ))
-                                                .to_string(),
-                                        );
                                     }
 
                                     branch_status_color = Some(Style::from_dotted_str("red.bold"));

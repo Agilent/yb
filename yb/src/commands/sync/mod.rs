@@ -8,16 +8,16 @@ use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use crate::commands::SubcommandRunner;
 use crate::commands::activate::activate_spec;
 use crate::commands::sync::actions::{
-    BBLayersEditAction, CheckoutBranchSyncAction, CloneRepoSyncAction,
+    BBLayersEditAction, CheckoutBranchSyncAction, CheckoutCommitSyncAction, CloneRepoSyncAction,
     CreateLocalTrackingBranchSyncAction, FastForwardPullSyncAction, ModifyBBLayersConfSyncAction,
     ResetGitWorkdirSyncAction, SyncAction,
 };
 use crate::config::Config;
 use crate::core::tool_context::require_yb_env;
-use crate::data_model::git::{
-    RemoteTrackingBranch, UpstreamComparison, determine_optimal_checkout_branch,
+use crate::data_model::git::{UpstreamComparison, determine_optimal_checkout_branch};
+use crate::data_model::status::{
+    ComputedStatusEntry, CorrespondingSpecRepoStatus, RemoteMatchTarget,
 };
-use crate::data_model::status::{ComputedStatusEntry, CorrespondingSpecRepoStatus};
 use crate::errors::YbResult;
 use crate::status_calculator::{StatusCalculatorEvent, StatusCalculatorOptions, compute_status};
 use crate::ui_ops::check_broken_streams::{
@@ -121,86 +121,103 @@ impl SubcommandRunner for SyncCommand {
                 match &status_data.corresponding_spec_repo {
                     Some(corresponding_spec_repo_status) => match &corresponding_spec_repo_status {
                         CorrespondingSpecRepoStatus::RemoteMatch(remote_match) => {
-                            if status_data.is_local_branch_tracking_correct_branch() {
-                                let upstream_comparison = status_data
-                                    .current_branch_status
-                                    .as_ref()
-                                    // TODO: unwrap is ok because `is_local_branch_tracking_correct_branch` returned true,
-                                    //  but maybe cleaner way to do this?
-                                    .unwrap()
-                                    .upstream_branch_status
-                                    .as_ref()
-                                    .unwrap()
-                                    .upstream_comparison;
-                                match upstream_comparison {
-                                    UpstreamComparison::UpToDate => {}
-                                    UpstreamComparison::Behind(_) => {
+                            match &remote_match.target {
+                                RemoteMatchTarget::Branch(remote_tracking_branch) => {
+                                    if status_data.is_synced_to_spec() {
+                                        let upstream_comparison = status_data
+                                            .current_checkout
+                                            .as_ref()
+                                            // TODO: unwrap is ok because `is_synced_to_spec` returned true,
+                                            //  but maybe cleaner way to do this?
+                                            .unwrap()
+                                            .as_branch_status()
+                                            .unwrap()
+                                            .upstream_branch_status
+                                            .as_ref()
+                                            .unwrap()
+                                            .upstream_comparison;
+                                        match upstream_comparison {
+                                            UpstreamComparison::UpToDate => {}
+                                            UpstreamComparison::Behind(_) => {
+                                                sync_actions.push(Box::new(
+                                                    FastForwardPullSyncAction::new(
+                                                        status_data.path.clone(),
+                                                    ),
+                                                ));
+                                            }
+                                            UpstreamComparison::Ahead(_) => {
+                                                let msg = format!(
+                                                    "{} is ahead of remote and I don't know what to do about it",
+                                                    status_data.path.display()
+                                                );
+                                                mp.error(msg);
+                                                panic!();
+                                            }
+                                            UpstreamComparison::Diverged { .. } => unimplemented!(),
+                                        }
+                                    } else if remote_match.local_branches_tracking_remote.is_empty()
+                                    {
+                                        let new_local_branch_name =
+                                            determine_local_branch_name_for_checkout(
+                                                &status_data.repo,
+                                                &remote_tracking_branch.branch_name,
+                                            )?;
+
+                                        sync_actions.push(Box::new(
+                                            CreateLocalTrackingBranchSyncAction::new(
+                                                status_data.path.clone(),
+                                                new_local_branch_name.clone(),
+                                                remote_tracking_branch.clone(),
+                                            ),
+                                        ));
+
+                                        sync_actions.push(Box::new(CheckoutBranchSyncAction::new(
+                                            status_data.path.clone(),
+                                            new_local_branch_name.clone(),
+                                        )));
+
                                         sync_actions.push(Box::new(
                                             FastForwardPullSyncAction::new(
                                                 status_data.path.clone(),
                                             ),
                                         ));
+                                    } else {
+                                        let optimal_branch = determine_optimal_checkout_branch(
+                                            &remote_match.local_branches_tracking_remote,
+                                        )
+                                        .unwrap();
+
+                                        sync_actions.push(Box::new(CheckoutBranchSyncAction::new(
+                                            status_data.path.clone(),
+                                            optimal_branch
+                                                .local_tracking_branch
+                                                .branch_name
+                                                .clone(),
+                                        )));
+
+                                        match optimal_branch.upstream_comparison {
+                                            UpstreamComparison::UpToDate => {}
+                                            UpstreamComparison::Behind(_) => {
+                                                sync_actions.push(Box::new(
+                                                    FastForwardPullSyncAction::new(
+                                                        status_data.path.clone(),
+                                                    ),
+                                                ));
+                                            }
+                                            UpstreamComparison::Ahead(_ahead) => {
+                                                // TODO: suggest pushing changes?
+                                            }
+                                            UpstreamComparison::Diverged { .. } => unimplemented!(),
+                                        }
                                     }
-                                    UpstreamComparison::Ahead(_) => {
-                                        let msg = format!(
-                                            "{} is ahead of remote and I don't know what to do about it",
-                                            status_data.path.display()
-                                        );
-                                        mp.error(msg);
-                                        panic!();
-                                    }
-                                    UpstreamComparison::Diverged { .. } => unimplemented!(),
                                 }
-                            } else if remote_match.local_branches_tracking_remote.is_empty() {
-                                let new_local_branch_name =
-                                    determine_local_branch_name_for_checkout(
-                                        &status_data.repo,
-                                        &remote_match.spec_repo.refspec,
-                                    )?;
-
-                                sync_actions.push(Box::new(
-                                    CreateLocalTrackingBranchSyncAction::new(
-                                        status_data.path.clone(),
-                                        new_local_branch_name.clone(),
-                                        RemoteTrackingBranch {
-                                            branch_name: remote_match.spec_repo.refspec.clone(),
-                                            remote_name: remote_match.matching_remote_name.clone(),
-                                        },
-                                    ),
-                                ));
-
-                                sync_actions.push(Box::new(CheckoutBranchSyncAction::new(
-                                    status_data.path.clone(),
-                                    new_local_branch_name.clone(),
-                                )));
-
-                                sync_actions.push(Box::new(FastForwardPullSyncAction::new(
-                                    status_data.path.clone(),
-                                )));
-                            } else {
-                                let optimal_branch = determine_optimal_checkout_branch(
-                                    &remote_match.local_branches_tracking_remote,
-                                )
-                                .unwrap();
-
-                                sync_actions.push(Box::new(CheckoutBranchSyncAction::new(
-                                    status_data.path.clone(),
-                                    optimal_branch.local_tracking_branch.branch_name.clone(),
-                                )));
-
-                                match optimal_branch.upstream_comparison {
-                                    UpstreamComparison::UpToDate => {}
-                                    UpstreamComparison::Behind(_) => {
-                                        sync_actions.push(Box::new(
-                                            FastForwardPullSyncAction::new(
-                                                status_data.path.clone(),
-                                            ),
-                                        ));
+                                RemoteMatchTarget::Commit(target_sha) => {
+                                    if !status_data.is_synced_to_spec() {
+                                        sync_actions.push(Box::new(CheckoutCommitSyncAction::new(
+                                            status_data.path.clone(),
+                                            target_sha.clone(),
+                                        )));
                                     }
-                                    UpstreamComparison::Ahead(_ahead) => {
-                                        // TODO: suggest pushing changes?
-                                    }
-                                    UpstreamComparison::Diverged { .. } => unimplemented!(),
                                 }
                             }
                         }
@@ -259,8 +276,7 @@ impl SubcommandRunner for SyncCommand {
 
         if self.apply {
             if sync_actions.iter().any(|action| action.is_force_required()) && !self.force {
-                mp.warn("need to pass --force flag to apply one or more actions");
-                panic!();
+                eyre::bail!("need to pass --force flag to apply one or more actions");
             }
 
             println!();

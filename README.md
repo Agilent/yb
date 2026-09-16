@@ -54,6 +54,11 @@ repos:
 ```
 </details>
 
+`refspec` is normally a branch name, but you can pin a repo to an exact commit instead by giving
+its full (40 or 64 character) commit hash, e.g. `refspec: "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678"`.
+`yb` checks out pinned commits as a detached `HEAD` and keeps them there - there's no branch to
+track, so `yb sync` just moves the checkout whenever the pinned hash in the spec changes.
+
 Specs live in **streams**. A stream is just a git repo that you've hosted somewhere accessible by your developers.
 
 If you need to add a layer to your build, just do it in the spec and commit the change to the stream. Developers using that stream with `yb` will automatically have the stream refreshed the next time they run `yb status` or `yb sync` (see below). 

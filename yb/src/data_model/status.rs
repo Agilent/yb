@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use crate::data_model::Layer;
 use crate::data_model::git::{
-    BranchStatus, LocalTrackingBranch, LocalTrackingBranchWithUpstreamComparison,
+    CurrentCheckout, LocalTrackingBranch, LocalTrackingBranchWithUpstreamComparison,
     RemoteTrackingBranch,
 };
 use git2::{Branch, BranchType, Oid, Repository};
@@ -15,7 +15,7 @@ use serde::Serialize;
 use tempfile::TempDir;
 
 use crate::errors::YbResult;
-use crate::spec::{ActiveSpec, SpecRepo};
+use crate::spec::{ActiveSpec, RefSpecKind, SpecRepo};
 use crate::status_calculator::{StatusCalculatorEvent, compare_branch_to_remote_tracking_branch};
 
 use crate::util::git::get_remote_tracking_branch;
@@ -149,8 +149,8 @@ pub struct OnDiskRepoStatus {
     pub is_workdir_dirty: bool,
     #[serde(skip)]
     pub recent_commits: Option<Vec<Oid>>,
-    /// Not necessarily the correct branch as far as any active spec is concerned
-    pub current_branch_status: Option<BranchStatus>,
+    /// Not necessarily the correct branch/commit as far as any active spec is concerned
+    pub current_checkout: Option<CurrentCheckout>,
     /// Status information pertaining to corresponding spec repo, or None if no matching spec repo
     pub corresponding_spec_repo: Option<CorrespondingSpecRepoStatus>,
     /// Layers that were detected inside the repo (via looking for conf/layer.conf)
@@ -166,18 +166,31 @@ impl OnDiskRepoStatus {
         self.corresponding_spec_repo.as_ref().map(|c| c.spec_repo())
     }
 
-    pub fn is_local_branch_tracking_correct_branch(&self) -> bool {
+    /// Whether the on-disk repo's current checkout already matches what the active spec
+    /// asks for - a local branch tracking the right remote branch, or HEAD detached at
+    /// the right pinned commit.
+    pub fn is_synced_to_spec(&self) -> bool {
         // TODO: enhance types to make this unnecessary?
         assert!(
             self.has_corresponding_spec_repo(),
             "need to check for spec repo before using this method!"
         );
         let spec_repo = self.corresponding_spec_repo.as_ref().unwrap();
-        match (spec_repo, &self.current_branch_status) {
-            (CorrespondingSpecRepoStatus::RemoteMatch(remote_match), Some(branch)) => {
-                remote_match.is_local_branch_tracking_correct_branch(&branch.local_branch_name)
+        match spec_repo {
+            CorrespondingSpecRepoStatus::RemoteMatch(remote_match) => {
+                match (&remote_match.target, &self.current_checkout) {
+                    (RemoteMatchTarget::Branch(_), Some(CurrentCheckout::Branch(branch))) => {
+                        remote_match
+                            .is_local_branch_tracking_correct_branch(&branch.local_branch_name)
+                    }
+                    (RemoteMatchTarget::Branch(_), _) => false,
+                    (
+                        RemoteMatchTarget::Commit(target_sha),
+                        Some(CurrentCheckout::Detached { commit }),
+                    ) => commit == target_sha,
+                    (RemoteMatchTarget::Commit(_), _) => false,
+                }
             }
-            (CorrespondingSpecRepoStatus::RemoteMatch(_), None) => false,
         }
     }
 }
@@ -188,7 +201,7 @@ impl Debug for OnDiskRepoStatus {
             .field("path", &self.path)
             .field("is_workdir_dirty", &self.is_workdir_dirty)
             .field("recent_commits", &self.recent_commits)
-            .field("current_branch_status", &self.current_branch_status)
+            .field("current_checkout", &self.current_checkout)
             .field("corresponding_spec_repo", &self.corresponding_spec_repo)
             .field("layers", &self.layers)
             .finish_non_exhaustive()
@@ -237,12 +250,22 @@ pub fn find_local_branches_tracking_remote_branch(
     Ok(filtered)
 }
 
+/// What an on-disk repo matched against a spec repo needs to converge to: either a
+/// remote-tracking branch (a moving target), or an exact pinned commit (a fixed target).
+#[derive(Debug, Clone, Eq, PartialEq, Serialize)]
+pub enum RemoteMatchTarget {
+    Branch(RemoteTrackingBranch),
+    /// Full hex commit hash being pinned to.
+    Commit(String),
+}
+
 #[derive(Debug, Eq, PartialEq, Serialize)]
 pub struct RemoteMatchStatus {
     pub is_extra_remote: bool,
     pub spec_repo: SpecRepo,
     pub spec_repo_name: String,
-    pub remote_tracking_branch: RemoteTrackingBranch,
+    pub target: RemoteMatchTarget,
+    /// Empty when `target` is a `Commit` pin - there's no "tracking" concept for a pin.
     pub local_branches_tracking_remote: Vec<LocalTrackingBranchWithUpstreamComparison>,
     pub matching_remote_name: String,
 }
@@ -316,16 +339,59 @@ pub fn clone_and_enumerate_revisions(spec_repo: &SpecRepo) -> YbResult<HashSet<S
     let tmp = TempDir::new().unwrap();
 
     let mut cmd = Command::new("git");
-    cmd.arg("clone")
-        .arg(&spec_repo.url)
-        .arg("-b")
-        .arg(&spec_repo.refspec)
-        .arg(tmp.path());
+    cmd.arg("clone").arg(&spec_repo.url);
+    if let RefSpecKind::Branch(branch) = spec_repo.refspec_kind() {
+        cmd.arg("-b").arg(branch);
+    }
+    cmd.arg(tmp.path());
     cmd.env("GIT_TERMINAL_PROMPT", "0");
     cmd.env("GIT_SSH_COMMAND", "ssh -o BatchMode=yes");
     cmd.assert().success();
 
+    if let RefSpecKind::Commit(sha) = spec_repo.refspec_kind() {
+        Command::new("git")
+            .arg("checkout")
+            .arg(sha)
+            .current_dir(tmp.path())
+            .env("GIT_TERMINAL_PROMPT", "0")
+            .assert()
+            .success();
+    }
+
     enumerate_revisions(tmp.path())
+}
+
+/// Builds the `RemoteMatchStatus` for `spec_repo` once matched against `remote_name`,
+/// resolving the spec's refspec into either a remote-tracking-branch target or a
+/// pinned-commit target.
+fn build_remote_match_status(
+    repo: &Repository,
+    spec_repo: &SpecRepo,
+    spec_repo_name: String,
+    remote_name: &str,
+    is_extra_remote: bool,
+) -> YbResult<RemoteMatchStatus> {
+    let (target, local_branches_tracking_remote) = match spec_repo.refspec_kind() {
+        RefSpecKind::Branch(branch_name) => {
+            let tracking_branch = RemoteTrackingBranch {
+                branch_name,
+                remote_name: remote_name.to_string(),
+            };
+            let local_branches =
+                find_local_branches_tracking_remote_branch(repo, &tracking_branch)?;
+            (RemoteMatchTarget::Branch(tracking_branch), local_branches)
+        }
+        RefSpecKind::Commit(sha) => (RemoteMatchTarget::Commit(sha), Vec::new()),
+    };
+
+    Ok(RemoteMatchStatus {
+        spec_repo: spec_repo.clone(),
+        spec_repo_name,
+        is_extra_remote,
+        local_branches_tracking_remote,
+        target,
+        matching_remote_name: remote_name.to_string(),
+    })
 }
 
 /// For the on-disk repository `repo`, try to find corresponding spec repo using these methods:
@@ -354,36 +420,22 @@ where
     for (spec_repo_subdir_name, spec_repo) in spec_repos {
         // Iterate through each of the on-disk repo's remotes
         for (remote_name, remote_url) in &remote_names_with_urls {
-            let tracking_branch = RemoteTrackingBranch {
-                branch_name: spec_repo.refspec.clone(),
-                remote_name: remote_name.clone(),
-            };
-
             if *remote_url == spec_repo.url {
                 // The remote URL exactly matches what the spec expects
                 return Ok(Some(CorrespondingSpecRepoStatus::RemoteMatch(
-                    RemoteMatchStatus {
-                        spec_repo: spec_repo.clone(),
-                        spec_repo_name: spec_repo_subdir_name.clone(),
-                        is_extra_remote: false,
-                        local_branches_tracking_remote: find_local_branches_tracking_remote_branch(
-                            repo,
-                            &tracking_branch,
-                        )?,
-                        remote_tracking_branch: tracking_branch,
-                        matching_remote_name: remote_name.clone(),
-                    },
+                    build_remote_match_status(
+                        repo,
+                        spec_repo,
+                        spec_repo_subdir_name.clone(),
+                        remote_name,
+                        false,
+                    )?,
                 )));
             }
         }
 
         // Consider extra remotes
         for (remote_name, remote_url) in &remote_names_with_urls {
-            let tracking_branch = RemoteTrackingBranch {
-                branch_name: spec_repo.refspec.clone(),
-                remote_name: remote_name.clone(),
-            };
-
             if spec_repo
                 .extra_remotes
                 .iter()
@@ -396,17 +448,13 @@ where
                     "TODO revisit assertion"
                 );
                 return Ok(Some(CorrespondingSpecRepoStatus::RemoteMatch(
-                    RemoteMatchStatus {
-                        spec_repo: spec_repo.clone(),
-                        spec_repo_name: spec_repo_subdir_name.clone(),
-                        is_extra_remote: true,
-                        local_branches_tracking_remote: find_local_branches_tracking_remote_branch(
-                            repo,
-                            &tracking_branch,
-                        )?,
-                        remote_tracking_branch: tracking_branch,
-                        matching_remote_name: remote_name.clone(),
-                    },
+                    build_remote_match_status(
+                        repo,
+                        spec_repo,
+                        spec_repo_subdir_name.clone(),
+                        remote_name,
+                        true,
+                    )?,
                 )));
             }
         }

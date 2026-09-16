@@ -5,7 +5,7 @@ use std::process::{Command, Stdio};
 use crate::commands::sync::actions::SyncAction;
 use crate::data_model::git::RemoteTrackingBranch;
 use crate::errors::YbResult;
-use crate::spec::SpecRepo;
+use crate::spec::{RefSpecKind, SpecRepo};
 use concurrent_git_pool::PoolHelper;
 
 #[derive(Debug)]
@@ -64,6 +64,42 @@ impl SyncAction for CheckoutBranchSyncAction {
             .arg(&self.branch_name)
             //.stdout(Stdio::null())
             //.stderr(Stdio::null())
+            .current_dir(&self.repo_path)
+            .output()?;
+
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct CheckoutCommitSyncAction {
+    repo_path: PathBuf,
+    commit_sha: String,
+}
+
+impl CheckoutCommitSyncAction {
+    pub fn new(repo_path: PathBuf, commit_sha: String) -> Self {
+        Self {
+            repo_path,
+            commit_sha,
+        }
+    }
+}
+
+#[async_trait]
+impl SyncAction for CheckoutCommitSyncAction {
+    fn is_force_required(&self) -> bool {
+        // A commit pin is always a hard move to an exact commit, never a fast-forward.
+        true
+    }
+
+    async fn apply(&self, _pool: &PoolHelper) -> YbResult<()> {
+        Command::new("git")
+            .arg("checkout")
+            .arg("--detach")
+            .arg(&self.commit_sha)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
             .current_dir(&self.repo_path)
             .output()?;
 
@@ -173,12 +209,16 @@ impl SyncAction for CloneRepoSyncAction {
         .await
         .unwrap()?;
 
-        assert_cmd::Command::new("git")
+        let mut checkout_cmd = assert_cmd::Command::new("git");
+        checkout_cmd
             .current_dir(&self.dest_repo_path)
-            .arg("checkout")
-            .arg(&self.spec_repo.refspec)
-            .assert()
-            .success();
+            .arg("checkout");
+        if matches!(self.spec_repo.refspec_kind(), RefSpecKind::Commit(_)) {
+            // Be explicit about detaching, rather than relying on git's implicit
+            // detached-HEAD behavior (and its accompanying advice text).
+            checkout_cmd.arg("--detach");
+        }
+        checkout_cmd.arg(&self.spec_repo.refspec).assert().success();
         Ok(())
     }
 }
@@ -220,5 +260,48 @@ mod tests {
             .unwrap()
             .trim();
         assert_eq!(current_branch, "honister");
+    }
+
+    #[tokio::test]
+    async fn clone_action_checks_out_correct_commit_pin() {
+        let dir = DebugTempDir::new().unwrap();
+        let dir_path = dir.path().to_path_buf();
+
+        let pool = PoolHelper::connect_or_local().await.unwrap();
+
+        // An arbitrary, long-settled commit on the `honister` branch.
+        let pinned_commit = "48d081265d06d14090f3b22c44f712a603116fba";
+
+        let spec_repo = SpecRepo {
+            name: "meta-raspberrypi".to_string(),
+            url: "https://github.com/agherzan/meta-raspberrypi.git".to_string(),
+            refspec: pinned_commit.to_string(),
+            extra_remotes: Default::default(),
+            obsolete_remotes: Default::default(),
+            layers: None,
+        };
+
+        let action = CloneRepoSyncAction::new(dir_path.clone(), spec_repo);
+        action.apply(&pool).await.unwrap();
+
+        let mut rev_parse_cmd = Command::new("git");
+        rev_parse_cmd
+            .current_dir(&dir_path)
+            .arg("rev-parse")
+            .arg("HEAD");
+        let rev_parse_output = rev_parse_cmd.output().unwrap();
+        let current_commit = std::str::from_utf8(&rev_parse_output.stdout)
+            .unwrap()
+            .trim();
+        assert_eq!(current_commit, pinned_commit);
+
+        // HEAD should be detached - `git symbolic-ref` fails when it isn't pointing at a branch.
+        let mut symbolic_ref_cmd = Command::new("git");
+        symbolic_ref_cmd
+            .current_dir(&dir_path)
+            .arg("symbolic-ref")
+            .arg("-q")
+            .arg("HEAD");
+        assert!(!symbolic_ref_cmd.output().unwrap().status.success());
     }
 }

@@ -1,5 +1,5 @@
 use color_eyre::Help;
-use git2::{Branch, FetchOptions, Repository, StatusOptions};
+use git2::{Branch, ErrorCode, FetchOptions, Repository, StatusOptions};
 use indoc::indoc;
 use maplit::hashset;
 use std::collections::{HashMap, HashSet};
@@ -10,11 +10,11 @@ use crate::config::Config;
 use crate::core::tool_context::{ToolContext, require_tool_context};
 use crate::data_model::Layer;
 use crate::data_model::git::{
-    BranchStatus, RemoteTrackingBranch, UpstreamBranchStatus, UpstreamComparison,
+    BranchStatus, CurrentCheckout, RemoteTrackingBranch, UpstreamBranchStatus, UpstreamComparison,
 };
 use crate::data_model::status::{
-    ComputedStatus, ComputedStatusEntry, MissingRepo, OnDiskNonRepoStatus, OnDiskRepoStatus,
-    find_corresponding_spec_repo_for_repo,
+    ComputedStatus, ComputedStatusEntry, CorrespondingSpecRepoStatus, MissingRepo,
+    OnDiskNonRepoStatus, OnDiskRepoStatus, find_corresponding_spec_repo_for_repo,
 };
 use crate::errors::YbResult;
 use crate::spec::SpecRepo;
@@ -127,12 +127,23 @@ fn compute_repo_status<F>(
 where
     F: FnMut(StatusCalculatorEvent),
 {
+    // See if we can map the repo to a spec repo first, so a repo pinned to a commit
+    // (and thus possibly in detached HEAD, with no "current branch upstream") still
+    // knows which remote to fetch below.
+    let spec_repo_status = find_corresponding_spec_repo_for_repo(&repo, active_spec_repos, c)?;
+
     // First things first, do a 'git fetch'
     // TODO: fetch all remotes?
     if !options.no_fetch {
-        let mut repo_remote = get_remote_for_current_branch(&repo)?;
-        // If the current branch is tracking an upstream branch, fetch it to check for updates
-        if let Some(remote) = repo_remote.as_mut() {
+        let remote_to_fetch = match &spec_repo_status {
+            Some(CorrespondingSpecRepoStatus::RemoteMatch(remote_match)) => {
+                repo.find_remote(&remote_match.matching_remote_name).ok()
+            }
+            // Not part of the active spec - fall back to whatever the current branch tracks.
+            None => get_remote_for_current_branch(&repo)?,
+        };
+
+        if let Some(mut remote) = remote_to_fetch {
             c(StatusCalculatorEvent::StartFetch);
             let mut fetch_options = FetchOptions::new();
             fetch_options.remote_callbacks(ssh_agent_remote_callbacks());
@@ -150,43 +161,51 @@ where
                 })?;
             c(StatusCalculatorEvent::FinishFetch);
         }
-
-        drop(repo_remote);
     }
 
-    // See if we can map the repo to a spec repo
-    let spec_repo_status = find_corresponding_spec_repo_for_repo(&repo, active_spec_repos, c)?;
+    let current_checkout = match repo.head_detached() {
+        Ok(true) => Some(CurrentCheckout::Detached {
+            commit: repo.head()?.peel_to_commit()?.id().to_string(),
+        }),
+        Ok(false) => get_current_local_branch(&repo)?
+            .map(|b| -> YbResult<_> {
+                let local_branch_name = b.name()?.unwrap().to_string();
 
-    let current_branch_status = get_current_local_branch(&repo)?
-        .map(|b| -> YbResult<_> {
-            let local_branch_name = b.name()?.unwrap().to_string();
-
-            Ok(BranchStatus {
-                local_branch_name,
-                upstream_branch_status: compare_branch_to_upstream(&repo, &b)?,
+                Ok(CurrentCheckout::Branch(BranchStatus {
+                    local_branch_name,
+                    upstream_branch_status: compare_branch_to_upstream(&repo, &b)?,
+                }))
             })
-        })
-        .transpose()?;
+            .transpose()?,
+        Err(ref e) if e.code() == ErrorCode::UnbornBranch => None,
+        Err(e) => return Err(e.into()),
+    };
 
     // Only run log if enabled and the repo is not diverged
-    let commits = match (options.log, &current_branch_status) {
-        (true, Some(status)) if !status.is_diverged() => {
-            let mut walker = repo.revwalk()?;
-            walker.set_sorting(git2::Sort::TOPOLOGICAL)?;
-            walker.push_head()?;
-            let mut commit_v = vec![];
-            for commit in walker.take(5) {
-                commit_v.push(commit?);
-            }
-            Some(commit_v)
+    let should_show_log = options.log
+        && match &current_checkout {
+            Some(CurrentCheckout::Branch(status)) => !status.is_diverged(),
+            Some(CurrentCheckout::Detached { .. }) => true,
+            None => false,
+        };
+
+    let commits = if should_show_log {
+        let mut walker = repo.revwalk()?;
+        walker.set_sorting(git2::Sort::TOPOLOGICAL)?;
+        walker.push_head()?;
+        let mut commit_v = vec![];
+        for commit in walker.take(5) {
+            commit_v.push(commit?);
         }
-        (_, _) => None,
+        Some(commit_v)
+    } else {
+        None
     };
 
     let is_workdir_dirty = !repo.statuses(Some(&mut StatusOptions::new()))?.is_empty();
 
     Ok(ComputedStatusEntry::OnDiskRepo(OnDiskRepoStatus {
-        current_branch_status,
+        current_checkout,
         is_workdir_dirty,
         repo,
         corresponding_spec_repo: spec_repo_status,

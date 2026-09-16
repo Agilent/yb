@@ -99,6 +99,20 @@ impl Spec {
             }
         }
 
+        // Validation: a refspec that's all-hex but not a full-length hash is almost
+        // certainly a typo'd commit hash rather than a real branch name.
+        for spec_repo in ret.repos.values() {
+            if looks_like_truncated_hash(&spec_repo.refspec) {
+                return Err(eyre::eyre!(
+                    "repo {}: refspec '{}' looks like a truncated commit hash - yb requires \
+                     the full 40 (or 64) character hash to pin a commit",
+                    spec_repo.name,
+                    spec_repo.refspec
+                )
+                .suppress_backtrace(true));
+            }
+        }
+
         Ok(ret)
     }
 
@@ -122,6 +136,37 @@ where
 {
     let opt = Option::deserialize(deserializer)?;
     Ok(opt.unwrap_or_default())
+}
+
+/// Classification of a `refspec` string: either a branch name or a full commit hash.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RefSpecKind {
+    Branch(String),
+    /// Full hex commit hash (40 chars for SHA-1, 64 for SHA-256), already validated.
+    Commit(String),
+}
+
+impl RefSpecKind {
+    /// A `refspec` is only treated as a pinned commit when it is a full-length hex
+    /// string - this mirrors how `git checkout`/`git rev-parse` already disambiguate
+    /// commit-ish vs ref-ish arguments.
+    pub fn classify(refspec: &str) -> RefSpecKind {
+        if is_full_commit_hash(refspec) {
+            RefSpecKind::Commit(refspec.to_string())
+        } else {
+            RefSpecKind::Branch(refspec.to_string())
+        }
+    }
+}
+
+fn is_full_commit_hash(s: &str) -> bool {
+    matches!(s.len(), 40 | 64) && s.chars().all(|c| c.is_ascii_hexdigit())
+}
+
+/// A refspec that's all-hex but not a valid full-length hash is neither a plausible
+/// branch name nor a usable pin - almost certainly a typo'd commit hash.
+fn looks_like_truncated_hash(s: &str) -> bool {
+    s.len() >= 6 && s.len() < 40 && s.chars().all(|c| c.is_ascii_hexdigit())
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
@@ -155,6 +200,10 @@ pub enum SpecRepoLayer {
 }
 
 impl SpecRepo {
+    pub fn refspec_kind(&self) -> RefSpecKind {
+        RefSpecKind::classify(&self.refspec)
+    }
+
     pub fn layers(&self) -> Option<HashSet<SpecRepoLayer>> {
         self.layers.clone().map(|layer_names| {
             layer_names
@@ -208,5 +257,68 @@ impl ActiveSpec {
 
     pub fn stream_key(&self) -> StreamKey {
         self.stream_key
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn refspec_kind_classifies_full_hashes_as_commits() {
+        let sha1 = "a".repeat(40);
+        let sha256 = "b".repeat(64);
+        assert_eq!(
+            RefSpecKind::classify(&sha1),
+            RefSpecKind::Commit(sha1.clone())
+        );
+        assert_eq!(
+            RefSpecKind::classify(&sha256),
+            RefSpecKind::Commit(sha256.clone())
+        );
+
+        let mixed_case = "ABCDEF0123456789abcdef0123456789ABCDEF01";
+        assert_eq!(
+            RefSpecKind::classify(mixed_case),
+            RefSpecKind::Commit(mixed_case.to_string())
+        );
+    }
+
+    #[test]
+    fn refspec_kind_classifies_branch_names_as_branches() {
+        for branch in ["scarthgap", "rel-v2024.2", "scarthgap/rust", "master"] {
+            assert_eq!(
+                RefSpecKind::classify(branch),
+                RefSpecKind::Branch(branch.to_string())
+            );
+        }
+    }
+
+    #[test]
+    fn looks_like_truncated_hash_rejects_short_hex_strings_only() {
+        assert!(looks_like_truncated_hash("a1b2c3d"));
+        assert!(!looks_like_truncated_hash("scarthgap"));
+        assert!(!looks_like_truncated_hash(&"a".repeat(40)));
+    }
+
+    #[test]
+    fn load_rejects_truncated_hash_refspec() {
+        let dir = tempfile::tempdir().unwrap();
+        let spec_path = dir.path().join("spec.yaml");
+        std::fs::write(
+            &spec_path,
+            indoc::indoc! {r#"
+                header:
+                    name: "test"
+                repos:
+                    some-repo:
+                        url: "https://example.com/some-repo.git"
+                        refspec: "a1b2c3d"
+            "#},
+        )
+        .unwrap();
+
+        let err = Spec::load(&spec_path, StreamKey::default()).unwrap_err();
+        assert!(err.to_string().contains("truncated commit hash"));
     }
 }
